@@ -1,0 +1,749 @@
+<title>Arquitetura Olavo Digital</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: índice fixo à esquerda, documento técnico à direita, tabelas com rolagem própria. */
+:root {
+  --bg: #f4f5f8; --surface: #ffffff; --ink: #161a24; --muted: #565e70; --line: #d9dde6;
+  --accent: #1f4fd1; --accent-soft: #e4eafb; --live: #c5172c; --live-soft: #fbe6e9; --warn-soft: #fbf1d9; --warn-ink: #6d4c00;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1118; --surface: #171b25; --ink: #e9ecf3; --muted: #a0a8b9; --line: #2c3342;
+  --accent: #86a6ff; --accent-soft: #1d2841; --live: #ff7385; --live-soft: #3a1820; --warn-soft: #33290f; --warn-ink: #eccb7c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1118; --surface: #171b25; --ink: #e9ecf3; --muted: #a0a8b9; --line: #2c3342;
+  --accent: #86a6ff; --accent-soft: #1d2841; --live: #ff7385; --live-soft: #3a1820; --warn-soft: #33290f; --warn-ink: #eccb7c; color-scheme: dark }
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto } }
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.6 var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 64px }
+.shell { display: grid; grid-template-columns: 236px minmax(0, 1fr); gap: 48px; max-width: 1240px; margin: 0 auto }
+nav.toc { position: sticky; top: env(safe-area-inset-top, 0px); align-self: start; max-height: 100vh; overflow-y: auto; padding-block: 32px; font-size: 14px }
+nav.toc p { margin: 0 0 10px; font-weight: 700; font-family: var(--display) }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px }
+nav.toc a { display: block; padding: 4px 8px; border-radius: 5px; color: var(--muted); text-decoration: none }
+nav.toc a:hover, nav.toc a:focus-visible { background: var(--accent-soft); color: var(--ink) }
+main { min-width: 0; padding-block: 32px }
+header.top { padding-bottom: 28px; border-bottom: 1px solid var(--line) }
+.eyebrow { font: 500 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15 }
+h1 { font-size: clamp(36px, 6vw, 56px); margin: 0 0 16px; font-weight: 700; letter-spacing: -.02em }
+h2 { font-size: 30px; margin: 0 0 14px; font-weight: 700; letter-spacing: -.01em }
+h3 { font-size: 20px; margin: 30px 0 8px; font-weight: 700 }
+section { padding-block: 44px 8px; scroll-margin-top: 8px }
+p, ul, ol.text { max-width: 72ch }
+p { margin: 0 0 14px }
+ul, ol.text { padding-left: 20px; margin: 0 0 14px }
+li { margin-bottom: 5px }
+.lead { font-size: 19px; color: var(--muted); max-width: 66ch; margin: 0 }
+code { font: 400 .87em var(--mono); background: var(--accent-soft); padding: 1px 4px; border-radius: 3px; overflow-wrap: anywhere }
+.scroll { overflow-x: auto; margin: 0 0 20px }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; font-variant-numeric: tabular-nums; background: var(--surface) }
+th { text-align: left; font-weight: 600; font-size: 13px; color: var(--muted); border-bottom: 2px solid var(--line); padding: 8px 12px; white-space: nowrap }
+td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; min-width: 120px }
+td:first-child { min-width: 150px }
+td.c, th.c { text-align: center; min-width: 74px }
+pre.code { font: 400 13px/1.55 var(--mono); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; margin: 0; white-space: pre }
+figure { margin: 0 0 24px }
+figure svg { display: block; width: 100%; min-width: 760px; height: auto; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px }
+figcaption { font-size: 14px; color: var(--muted); margin-top: 8px; max-width: 72ch }
+pre.mermaid { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; margin: 0; text-align: center }
+.choice { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 12px; padding: 14px 0; border-bottom: 1px solid var(--line); max-width: 78ch }
+.choice b.n { font: 700 20px var(--display); color: var(--accent) }
+.choice strong { display: block }
+.choice p { margin: 2px 0 0; color: var(--muted) }
+.note { background: var(--warn-soft); color: var(--warn-ink); padding: 12px 14px; border-radius: 6px; max-width: 72ch; margin: 0 0 18px }
+.yes { color: var(--accent); font-weight: 700 }
+.own { color: var(--muted) }
+.sources { font-size: 14px; color: var(--muted) }
+a { color: var(--accent) }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px }
+@media (max-width: 900px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 0 }
+  nav.toc { position: static; max-height: none; padding-block: 20px 0 }
+  nav.toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)) }
+  h2 { font-size: 25px }
+}
+</style>
+
+<div class="shell">
+<nav class="toc" aria-label="Índice">
+  <p>Índice</p>
+  <ol>
+    <li><a href="#resumo">Resumo</a></li>
+    <li><a href="#decisoes">Decisões pendentes</a></li>
+    <li><a href="#arquitetura">1. Arquitetura geral</a></li>
+    <li><a href="#pastas">2. Estrutura de pastas</a></li>
+    <li><a href="#modulos">3. Módulos</a></li>
+    <li><a href="#banco">4. Modelagem do banco</a></li>
+    <li><a href="#er">5. Relacionamentos</a></li>
+    <li><a href="#permissoes">6. Perfis e permissões</a></li>
+    <li><a href="#fluxos">7. Fluxos</a></li>
+    <li><a href="#api">8. Contratos da API</a></li>
+    <li><a href="#storage">9. Armazenamento</a></li>
+    <li><a href="#streaming">10. Streaming</a></li>
+    <li><a href="#seguranca">Segurança e desempenho</a></li>
+    <li><a href="#interpretacoes">Limites e interpretações</a></li>
+    <li><a href="#roadmap">Plano por fases</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="top">
+  <p class="eyebrow">Olavo Pré-Vestibular · proposta para aprovação · 4 nov. 2026</p>
+  <h1>Arquitetura Olavo Digital</h1>
+  <p class="lead">Os dez itens exigidos antes da implementação: arquitetura, pastas, módulos, banco, relacionamentos, permissões, fluxos, API, armazenamento e streaming. Fase 0 implementada; desenvolvimento local nativo, sem Docker.</p>
+</header>
+
+<section id="resumo">
+<h2>Resumo</h2>
+<p>O Olavo Digital será uma aplicação React servida ao lado de uma API Laravel, com MySQL como fonte da verdade. <strong>O Laravel nunca transporta mídia.</strong> Ele decide quem pode ver o quê e emite autorizações temporárias. O vídeo trafega pelo Cloudflare Stream e os demais arquivos pelo Cloudflare R2.</p>
+<p>Quatro decisões sustentam o projeto:</p>
+<ul>
+  <li><strong>Home como dado.</strong> Seções, hero e público vivem no banco, em layouts versionados. É o que permite pré-visualizar antes de publicar sem expor nada aos alunos.</li>
+  <li><strong>Um único motor de público.</strong> Materiais, seções, banners, avisos e transmissões usam a mesma tabela <code>audience_targets</code> e o mesmo serviço de acesso, verificado no backend.</li>
+  <li><strong>Um único pipeline de upload.</strong> Todo arquivo entra pela tabela <code>uploads</code>, passa por quarentena e validação, e só então fica disponível.</li>
+  <li><strong>Provedores atrás de interfaces.</strong> O streaming fica atrás de <code>VideoProvider</code>, permitindo trocar de fornecedor sem mexer nas regras de negócio.</li>
+</ul>
+</section>
+
+<section id="decisoes">
+<h2>Decisões que dependem de vocês</h2>
+<p>As duas primeiras afetam a arquitetura e precisam de resposta antes da fase da Olavo TV. As demais têm um padrão assumido neste documento.</p>
+<div class="choice"><b class="n">A</b><div><strong>Qual é o encoder usado nas transmissões, e ele envia RTMPS ou SRT?</strong><p>O Cloudflare Stream aceita RTMPS e SRT. Um encoder limitado a RTMP sem TLS exigiria um retransmissor ou outro provedor. Preciso do modelo do equipamento ou software.</p></div></div>
+<div class="choice"><b class="n">B</b><div><strong>Aprovar Cloudflare Stream como provedor de vídeo?</strong><p>Recomendo sim, para aulas gravadas e ao vivo. A alternativa de hospedar tudo por conta própria reduz o custo em grande volume, mas transfere para a equipe a operação de servidores de vídeo durante as aulas ao vivo. Comparação na <a href="#streaming">seção 10</a>.</p></div></div>
+<div class="choice"><b class="n">C</b><div><strong>Quantos alunos, e quantos simultâneos em uma live?</strong><p>Assumi até 10 mil alunos cadastrados e 1 mil simultâneos. Esse número dimensiona servidores e estima custo de vídeo.</p></div></div>
+<div class="choice"><b class="n">D</b><div><strong>Onde a aplicação será hospedada, e em qual domínio?</strong><p>Assumi um VPS Linux, inicialmente, e um domínio único com a API em <code>/api</code>, o que evita CORS e simplifica os cookies do Sanctum.</p></div></div>
+<div class="choice"><b class="n">E</b><div><strong>Como os alunos entram na plataforma?</strong><p>Assumi cadastro pelo administrador, com importação de planilha e sem cadastro aberto. Se já houver uma base de alunos, preciso do formato.</p></div></div>
+<div class="choice"><b class="n">F</b><div><strong>Vocês têm logo, cores e fotos oficiais?</strong><p>A identidade é configurável no painel, mas a primeira versão precisa desses arquivos. Sem eles, proponho uma identidade provisória para validação.</p></div></div>
+<div class="choice"><b class="n">G</b><div><strong>Há alunos menores de 18 anos?</strong><p>Provavelmente sim, em pré-vestibular. A LGPD exige tratamento no melhor interesse da criança e do adolescente, então a política de privacidade e o consentimento precisam de revisão jurídica. A especificação não trata disso; incluí o suporte técnico na <a href="#seguranca">seção de segurança</a>.</p></div></div>
+</section>
+
+<section id="arquitetura">
+<h2>1. Arquitetura geral</h2>
+<figure>
+<div class="scroll" style="margin:0">
+<svg viewBox="0 0 980 520" role="img" aria-label="O navegador fala com a API Laravel e o Reverb no plano de controle. O vídeo e os arquivos vão diretamente entre navegador, Cloudflare Stream e Cloudflare R2, sem passar pelo Laravel.">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker>
+    <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--live)"/></marker>
+  </defs>
+  <g fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 5">
+    <rect x="250" y="24" width="710" height="270" rx="6"/>
+    <rect x="250" y="330" width="710" height="170" rx="6"/>
+  </g>
+  <g font-family="var(--body)" font-size="12" font-weight="600" fill="var(--muted)" text-anchor="end">
+    <text x="946" y="282">Plano de controle: nossa aplicação</text>
+    <text x="946" y="352">Plano de mídia: infraestrutura especializada</text>
+  </g>
+  <g fill="var(--accent-soft)" stroke="currentColor" stroke-width="1.2">
+    <rect x="24" y="110" width="170" height="150" rx="5"/>
+    <rect x="280" y="64" width="190" height="84" rx="5"/>
+    <rect x="280" y="190" width="120" height="76" rx="5"/>
+    <rect x="540" y="64" width="170" height="64" rx="5"/>
+    <rect x="770" y="64" width="170" height="64" rx="5"/>
+    <rect x="540" y="190" width="170" height="76" rx="5"/>
+    <rect x="60" y="400" width="134" height="70" rx="5"/>
+    <rect x="280" y="370" width="190" height="96" rx="5"/>
+    <rect x="540" y="370" width="170" height="96" rx="5"/>
+  </g>
+  <g font-family="var(--body)" font-size="14" font-weight="700" fill="currentColor" text-anchor="middle">
+    <text x="109" y="172">Navegador</text><text x="375" y="100">API Laravel</text><text x="340" y="222">Reverb</text>
+    <text x="625" y="92">Redis</text><text x="855" y="92">MySQL</text><text x="625" y="222">Workers</text>
+    <text x="127" y="430">Encoder</text><text x="375" y="410">Cloudflare Stream</text><text x="625" y="410">Cloudflare R2</text>
+  </g>
+  <g font-family="var(--body)" font-size="12" fill="var(--muted)" text-anchor="middle">
+    <text x="109" y="192">SPA React</text><text x="109" y="210">aluno, admin, professor</text>
+    <text x="375" y="120">regras, acesso, tokens</text><text x="340" y="242">tempo real</text>
+    <text x="625" y="112">cache, filas</text><text x="855" y="112">dados e metadados</text><text x="625" y="242">uploads, avisos, agenda</text>
+    <text x="127" y="450">estúdio</text><text x="375" y="430">ingestão, HLS, gravação</text><text x="625" y="430">PDFs, imagens,</text><text x="625" y="447">documentos</text>
+  </g>
+  <g fill="none" stroke="currentColor" stroke-width="1.3">
+    <path d="M194 130H279" marker-end="url(#a)" marker-start="url(#a)"/>
+    <path d="M194 228H279" marker-end="url(#a)" marker-start="url(#a)"/>
+    <path d="M470 96H539" marker-end="url(#a)"/>
+    <path d="M375 64V42H855V63" marker-end="url(#a)"/>
+    <path d="M340 148V189" marker-end="url(#a)"/>
+    <path d="M625 128V189" marker-end="url(#a)"/>
+    <path d="M710 228H855V129" marker-end="url(#a)"/>
+    <path d="M625 266V369" marker-end="url(#a)"/>
+    <path d="M425 148V369" marker-end="url(#a)"/>
+    <path d="M455 369V149" marker-end="url(#a)"/>
+  </g>
+  <g fill="none" stroke="var(--live)" stroke-width="2">
+    <path d="M194 435H279" marker-end="url(#b)"/>
+    <path d="M300 370V318H110V261" marker-end="url(#b)"/>
+    <path d="M40 261V486H625V467" marker-start="url(#b)" marker-end="url(#b)"/>
+  </g>
+  <g font-family="var(--body)" font-size="11.5" fill="currentColor">
+    <text x="237" y="122" text-anchor="middle">REST, cookie</text>
+    <text x="237" y="220" text-anchor="middle">WebSocket</text>
+    <text x="505" y="88" text-anchor="middle">jobs</text>
+    <text x="600" y="38" text-anchor="middle">SQL</text>
+    <text x="350" y="172">eventos</text>
+    <text x="632" y="164">jobs</text>
+    <text x="782" y="244">SQL</text>
+    <text x="632" y="316">valida, converte</text>
+    <text x="419" y="316" text-anchor="end">assina, configura</text>
+    <text x="462" y="316">webhooks</text>
+  </g>
+  <g font-family="var(--body)" font-size="11.5" fill="var(--live)" font-weight="600">
+    <text x="237" y="427" text-anchor="middle">RTMPS / SRT</text>
+    <text x="200" y="312" text-anchor="middle">HLS assinado</text>
+    <text x="330" y="481" text-anchor="middle">envio e leitura com URL temporária</text>
+  </g>
+</svg>
+</div>
+<figcaption>Os caminhos em vermelho carregam mídia e não passam pelo Laravel. Uma aula ao vivo com mil alunos gera carga no provedor, não na API. O Laravel participa apenas para autorizar e registrar.</figcaption>
+</figure>
+
+<h3>Stack definida</h3>
+<div class="scroll"><table>
+<tr><th>Camada</th><th>Escolha</th><th>Motivo</th></tr>
+<tr><td>Frontend</td><td>React, TypeScript, Vite, Tailwind, shadcn/ui, React Router, TanStack Query, Zustand</td><td>Exigidos. Dados do servidor ficam no TanStack Query. Zustand guarda só estado local, como player e preferências de interface.</td></tr>
+<tr><td>Bibliotecas de interface</td><td>Embla (carrosséis e gestos), dnd-kit (construtor), hls.js (vídeo), pdf.js (leitor), Recharts (gráficos)</td><td>Resolvem problemas difíceis com boa acessibilidade e suporte a toque.</td></tr>
+<tr><td>Backend</td><td>Laravel 13 com PHP 8.3, Sanctum, Policies, Queue, Reverb, Horizon</td><td>Instalado: Laravel 13.40 sobre o PHP 8.3 do Laragon. Horizon entra só em produção Linux, pois depende de uma extensão indisponível no Windows.</td></tr>
+<tr><td>Banco</td><td>MySQL 8.4 com <code>utf8mb4_0900_ai_ci</code></td><td>Busca ignora acentos e caixa, e <code>CHECK</code> reforça regras no próprio banco.</td></tr>
+<tr><td>Redis</td><td>Cache, filas e escala do Reverb em produção. Sessões ficam no MySQL, pois a tela de sessões ativas consulta essa tabela</td><td>Acréscimo à especificação. Cache e filas em produção exigem um armazenamento rápido; Horizon depende dele.</td></tr>
+<tr><td>Arquivos</td><td>Cloudflare R2</td><td>Preferência da especificação, compatível com S3.</td></tr>
+<tr><td>Vídeo</td><td>Cloudflare Stream atrás de <code>VideoProvider</code></td><td>Ver <a href="#streaming">seção 10</a>.</td></tr>
+<tr><td>Busca</td><td>MySQL FULLTEXT em tabela desnormalizada, via Laravel Scout</td><td>Não adiciona serviço no início. Meilisearch pode entrar depois sem mudar a API. Limite: sem tolerância a erros de digitação.</td></tr>
+</table></div>
+
+<h3>Três interfaces, uma aplicação</h3>
+<p>Aluno, administrador e professor ficam na mesma SPA, com layouts distintos e rotas carregadas sob demanda. O aluno não baixa o código do painel. Isso evita três builds e permite compartilhar autenticação, tipos e componentes de mídia. A área do aluno usa componentes próprios, e shadcn/ui fica como base dos painéis e de elementos como diálogos.</p>
+</section>
+
+<section id="pastas">
+<h2>2. Estrutura de pastas</h2>
+<p>Monorepo com frontend, backend e infraestrutura versionados juntos, o que mantém contrato de API e cliente no mesmo commit.</p>
+<div class="scroll"><pre class="code">olavo-digital/
+├─ apps/
+│  ├─ web/src/
+│  │  ├─ app/          router/ providers/ layouts/
+│  │  ├─ modules/      auth/ home/ catalog/ materials/ video-player/ olavo-tv/
+│  │  │                cast/ favorites/ history/ notifications/ profile/ search/
+│  │  │                students/ teachers/ categories/ admin/ teacher-portal/ analytics/
+│  │  │   └─ (cada módulo)  api/ components/ hooks/ pages/ types.ts
+│  │  ├─ components/   ui/ netflix/ cards/ carousels/ media/ navigation/
+│  │  ├─ services/     http.ts  realtime.ts  upload.ts
+│  │  ├─ hooks/  stores/  types/  utils/
+│  └─ api/
+│     ├─ app/
+│     │  ├─ Modules/   Auth/ Access/ Catalog/ Materials/ Uploads/ Home/ Playback/
+│     │  │             LiveTv/ Cast/ Notifications/ Announcements/ Search/ Analytics/ Settings/
+│     │  │   └─ (cada módulo)  Models/ Http/{Controllers,Requests,Resources}
+│     │  │                     Actions/ Services/ Policies/ Jobs/ Events/ Listeners/
+│     │  │                     Notifications/ Enums/
+│     │  └─ Support/   ApiResponse, Audit, Providers de vídeo e armazenamento
+│     ├─ database/     migrations/ seeders/ factories/
+│     ├─ routes/       api_v1.php  channels.php  console.php
+│     └─ tests/        Feature/ Unit/
+├─ scripts/            dev.ps1 (ambiente local sem Docker)
+├─ infra/              nginx/  supervisor/
+└─ docs/               api/  adr/</pre></div>
+<p>Acréscimos à sugestão: os módulos <code>search</code> e <code>teacher-portal</code>. No backend, as camadas pedidas ficam dentro de cada módulo em vez de pastas globais, para que Olavo Corrige ou Simulados entrem como módulos novos sem espalhar arquivos.</p>
+</section>
+
+<section id="modulos">
+<h2>3. Diagrama de módulos</h2>
+<figure>
+<div class="scroll" style="margin:0"><pre class="mermaid">
+flowchart TD
+  Auth["Auth: login, sessões"]
+  Access["Access: papéis e público"]
+  Uploads["Uploads: arquivos"]
+  Catalog["Catalog: categorias e tipos"]
+  Cast["Cast: professores"]
+  Materials["Materials: publicação"]
+  Playback["Playback: progresso e histórico"]
+  Home["Home: seções e hero"]
+  LiveTv["LiveTv: transmissões"]
+  Search["Search"]
+  Notifications["Notifications"]
+  Announcements["Announcements: avisos"]
+  Analytics["Analytics"]
+
+  Access --> Auth
+  Materials --> Access
+  Materials --> Uploads
+  Materials --> Catalog
+  Materials --> Cast
+  Playback --> Materials
+  Home --> Materials
+  Home --> Announcements
+  Home --> LiveTv
+  Home --> Playback
+  LiveTv --> Materials
+  LiveTv --> Cast
+  Search --> Materials
+  Search --> Cast
+  Announcements --> Access
+  Analytics --> Playback
+  Materials -. evento .-> Notifications
+  LiveTv -. evento .-> Notifications
+  Announcements -. evento .-> Notifications
+</pre></div>
+<figcaption>Setas contínuas indicam dependência direta. Setas pontilhadas são eventos: Materials publica <code>MaterialPublished</code> e não conhece o módulo de notificações. Módulos futuros seguem o mesmo padrão.</figcaption>
+</figure>
+</section>
+
+<section id="banco">
+<h2>4. Modelagem do banco</h2>
+<p>São 44 tabelas de domínio: as 24 da especificação e 20 acréscimos, listados abaixo. Salvo indicação, cada tabela tem <code>id BIGINT UNSIGNED</code>, <code>created_at</code> e <code>updated_at</code>. Tabelas internas do Laravel, como filas, ficam fora da lista.</p>
+<h3>Decisões de modelagem</h3>
+<ul>
+  <li><strong>Exclusão lógica</strong> em <code>users</code>, <code>students</code>, <code>teachers</code>, <code>categories</code> e <code>materials</code>, para preservar histórico e auditoria. Registros de ligação usam exclusão real.</li>
+  <li><strong>Tipos extensíveis por tabela.</strong> <code>category_types</code> permite novos tipos sem migração. Enums ficam para valores presos a código, como <code>materials.status</code>.</li>
+  <li><strong>Enums como <code>VARCHAR</code></strong>, validados por Enums PHP. Adicionar um valor não exige <code>ALTER TABLE</code> em tabela grande.</li>
+  <li><strong>Polimorfismo apenas onde compensa.</strong> Somente <code>audience_targets</code> e <code>activity_logs</code> são polimórficas. Banners usam FKs explícitas com <code>CHECK</code>, preservando a integridade referencial.</li>
+  <li><strong>Grupos e turmas em uma tabela,</strong> <code>student_groups</code>, diferenciados por <code>kind</code>. Têm o mesmo comportamento, e duas tabelas duplicariam toda a lógica de público.</li>
+</ul>
+
+<h3>Identidade e acesso</h3>
+<div class="scroll"><table>
+<tr><th>Tabela</th><th>Colunas principais</th><th>Restrições e índices</th></tr>
+<tr><td><code>users</code></td><td>name, email, phone, password, avatar_upload_id, status, preferences JSON, last_login_at, email_verified_at, deleted_at</td><td>UQ email; idx status, last_login_at</td></tr>
+<tr><td><code>roles</code></td><td>slug, name, description, is_system</td><td>UQ slug; papéis de sistema não podem ser excluídos</td></tr>
+<tr><td><code>permissions</code></td><td>slug, module, description</td><td>UQ slug</td></tr>
+<tr><td><code>role_permissions</code> <span class="own">novo</span></td><td>role_id, permission_id</td><td>PK composta; FK cascade</td></tr>
+<tr><td><code>user_roles</code></td><td>user_id, role_id</td><td>PK composta; idx role_id</td></tr>
+<tr><td><code>user_permissions</code> <span class="own">novo</span></td><td>user_id, permission_id, effect (allow, deny)</td><td>PK composta; exceções individuais ao papel</td></tr>
+<tr><td><code>sessions</code> <span class="own">novo</span></td><td>id, user_id, ip_address, user_agent, payload, last_activity</td><td>Formato do Laravel; permite listar e encerrar sessões</td></tr>
+<tr><td><code>personal_access_tokens</code> <span class="own">novo</span></td><td>Formato do Sanctum</td><td>Reservada ao aplicativo mobile futuro</td></tr>
+<tr><td><code>students</code></td><td>user_id, enrollment_code, birth_date, guardian_name, guardian_contact, external_ref, deleted_at</td><td>UQ user_id; UQ enrollment_code; external_ref prepara matrículas</td></tr>
+<tr><td><code>teachers</code></td><td>user_id (nulo permitido), slug, display_name, short_bio, bio, photo_upload_id, banner_upload_id, specialties JSON, publish_mode, show_in_cast, status, sort_order, deleted_at</td><td>UQ user_id; UQ slug; idx (show_in_cast, status, sort_order)</td></tr>
+<tr><td><code>teacher_social_links</code> <span class="own">novo</span></td><td>teacher_id, network, url, sort_order</td><td>UQ (teacher_id, network)</td></tr>
+<tr><td><code>teacher_categories</code> <span class="own">novo</span></td><td>teacher_id, category_id, can_publish</td><td>PK composta; base da autorização por matéria</td></tr>
+<tr><td><code>student_groups</code> <span class="own">novo</span></td><td>name, slug, kind (turma, grupo), year, is_active</td><td>UQ slug; idx (kind, is_active)</td></tr>
+<tr><td><code>student_group_members</code> <span class="own">novo</span></td><td>student_group_id, student_id, joined_at</td><td>PK composta; idx student_id</td></tr>
+<tr><td><code>audience_targets</code> <span class="own">novo</span></td><td>targetable_type, targetable_id, student_group_id, student_id</td><td>Exatamente um destino, garantido por <code>HasAudience</code>, pois o MySQL proíbe CHECK em colunas com FK em cascata; UQ destino por alvo; idx (student_group_id, targetable_type, targetable_id)</td></tr>
+</table></div>
+
+<h3>Catálogo e materiais</h3>
+<div class="scroll"><table>
+<tr><th>Tabela</th><th>Colunas principais</th><th>Restrições e índices</th></tr>
+<tr><td><code>category_types</code></td><td>slug, name, is_system, sort_order</td><td>UQ slug; seed: matéria, avisos, revisões, eventos, cursos, especial, personalizada</td></tr>
+<tr><td><code>categories</code></td><td>category_type_id, parent_id, slug, name, description, icon, cover_upload_id, sort_order, is_active, visibility, deleted_at</td><td>UQ slug; FK parent_id para a própria tabela; idx (parent_id, sort_order), (category_type_id, is_active)</td></tr>
+<tr><td><code>uploads</code> <span class="own">novo</span></td><td>uuid, disk, object_key, original_name, mime_type, size_bytes, checksum, status, width, height, meta JSON, uploaded_by</td><td>UQ uuid; UQ (disk, object_key); idx (status, created_at)</td></tr>
+<tr><td><code>video_assets</code> <span class="own">novo</span></td><td>provider, provider_ref, status, duration_seconds, thumbnail_url, meta JSON</td><td>UQ (provider, provider_ref); serve a aulas e gravações</td></tr>
+<tr><td><code>materials</code></td><td>slug, title, description, type, status, visibility, teacher_id, cover_upload_id, video_asset_id, external_url, publish_at, published_at, archived_at, allow_download, is_featured, created_by, reviewed_by, reviewed_at, review_note, deleted_at</td><td>UQ slug; idx (status, published_at), (teacher_id, status), (type, status, published_at), (is_featured, status)</td></tr>
+<tr><td><code>material_files</code></td><td>material_id, upload_id, role (principal, preview_pdf, legenda, anexo), locale, sort_order</td><td>UQ (material_id, upload_id); idx (material_id, role)</td></tr>
+<tr><td><code>material_categories</code></td><td>material_id, category_id, is_primary, primary_guard (coluna gerada)</td><td>PK composta; UQ primary_guard garante uma só matéria principal; idx category_id</td></tr>
+<tr><td><code>material_collaborators</code> <span class="own">novo</span></td><td>material_id, teacher_id</td><td>PK composta</td></tr>
+<tr><td><code>tags</code></td><td>name, slug</td><td>UQ slug</td></tr>
+<tr><td><code>material_tags</code></td><td>material_id, tag_id</td><td>PK composta; idx tag_id</td></tr>
+<tr><td><code>material_search</code> <span class="own">novo</span></td><td>material_id, title, description, teacher_name, category_names, tag_names, type_label</td><td>PK material_id; FULLTEXT com peso por campo na consulta; atualizada por job</td></tr>
+<tr><td><code>material_daily_stats</code> <span class="own">novo</span></td><td>material_id, day, views, unique_viewers, watch_seconds</td><td>PK (material_id, day); idx day; o dashboard lê daqui</td></tr>
+</table></div>
+
+<h3>Home</h3>
+<div class="scroll"><table>
+<tr><th>Tabela</th><th>Colunas principais</th><th>Restrições e índices</th></tr>
+<tr><td><code>home_layouts</code> <span class="own">novo</span></td><td>name, status (rascunho, publicado, arquivado), published_at, published_by</td><td>idx status; publicar arquiva o anterior na mesma transação</td></tr>
+<tr><td><code>home_sections</code></td><td>home_layout_id, title, description, source_type, source_config JSON, category_id, layout, max_items, sort_order, is_active, starts_at, ends_at</td><td>FK cascade para o layout; idx (home_layout_id, is_active, sort_order)</td></tr>
+<tr><td><code>home_section_items</code></td><td>home_section_id, material_id, sort_order</td><td>UQ (home_section_id, material_id)</td></tr>
+<tr><td><code>banners</code></td><td>home_layout_id, placement (hero, faixa), title, description, cta_label, image_upload_id, video_upload_id, material_id, live_schedule_id, announcement_id, external_url, sort_order, is_active, starts_at, ends_at</td><td>CHECK no máximo um destino; idx (home_layout_id, placement, is_active, starts_at, ends_at)</td></tr>
+</table></div>
+<p><code>source_type</code> aceita <code>manual</code>, <code>category</code>, <code>recent</code>, <code>featured</code>, <code>continue_watching</code>, <code>recommended</code>, <code>announcements</code>, <code>live</code> e <code>teacher</code>. Cada valor corresponde a uma classe que implementa <code>SectionSource</code>, então uma nova origem não altera a tela. Matemática, Física e as demais não existem no código: são seções <code>category</code> criadas pelo seeder.</p>
+
+<h3>Experiência do aluno</h3>
+<div class="scroll"><table>
+<tr><th>Tabela</th><th>Colunas principais</th><th>Restrições e índices</th></tr>
+<tr><td><code>favorites</code></td><td>student_id, material_id, created_at</td><td>PK composta; idx (student_id, created_at)</td></tr>
+<tr><td><code>watch_progress</code></td><td>student_id, material_id, position_seconds, duration_seconds, completed_at, last_watched_at</td><td>UQ (student_id, material_id); idx (student_id, completed_at, last_watched_at). Guarda o estado atual.</td></tr>
+<tr><td><code>watch_history</code></td><td>student_id, material_id, started_at, last_event_at, seconds_watched, device, hidden_at</td><td>idx (student_id, hidden_at, started_at), (material_id, started_at). Guarda cada acesso; limpar define hidden_at e preserva as métricas.</td></tr>
+</table></div>
+
+<h3>Olavo TV</h3>
+<div class="scroll"><table>
+<tr><th>Tabela</th><th>Colunas principais</th><th>Restrições e índices</th></tr>
+<tr><td><code>live_channels</code> <span class="own">novo</span></td><td>name, provider, provider_input_id, ingest_rtmps_url, ingest_srt_url, stream_key (criptografada), playback_ref, is_active</td><td>UQ (provider, provider_input_id). A chave pertence ao canal, e o encoder não precisa ser reconfigurado a cada aula.</td></tr>
+<tr><td><code>live_schedules</code></td><td>live_channel_id, title, description, teacher_id, category_id, cover_upload_id, starts_at, ends_at, status, is_adhoc, notify_on_start</td><td>CHECK ends_at &gt; starts_at; idx (status, starts_at), (teacher_id, starts_at)</td></tr>
+<tr><td><code>live_streams</code></td><td>live_schedule_id, live_channel_id, provider_session_ref, started_at, ended_at, peak_viewers, video_asset_id, material_id</td><td>UQ (live_channel_id, provider_session_ref); idx (live_channel_id, ended_at). material_id aponta para a gravação publicada.</td></tr>
+</table></div>
+<p>A programação é o que se planeja; <code>live_streams</code> é o que de fato aconteceu. Uma aula com queda longa de sinal gera duas sessões técnicas para a mesma programação. Uma live sem agendamento cria uma programação com <code>is_adhoc</code>, de modo que título e professor nunca fiquem duplicados.</p>
+
+<h3>Comunicação e sistema</h3>
+<div class="scroll"><table>
+<tr><th>Tabela</th><th>Colunas principais</th><th>Restrições e índices</th></tr>
+<tr><td><code>notifications</code></td><td>type, title, message, image_upload_id, icon, action_url, created_by, sent_at</td><td>idx (type, sent_at); o texto é único, os destinatários ficam ao lado</td></tr>
+<tr><td><code>notification_recipients</code> <span class="own">novo</span></td><td>notification_id, user_id, read_at, delivered_at</td><td>PK composta; idx (user_id, read_at, notification_id)</td></tr>
+<tr><td><code>push_subscriptions</code> <span class="own">novo</span></td><td>user_id, channel, endpoint, keys JSON</td><td>UQ endpoint; criada agora, usada quando push for ativado</td></tr>
+<tr><td><code>announcements</code></td><td>title, description, image_upload_id, priority, display_mode (banner, card, seção), is_pinned, send_notification, requires_ack, publish_at, expires_at, created_by, deleted_at</td><td>idx (publish_at, expires_at), (is_pinned, priority)</td></tr>
+<tr><td><code>announcement_reads</code> <span class="own">novo</span></td><td>announcement_id, student_id, read_at, acknowledged_at</td><td>PK composta</td></tr>
+<tr><td><code>settings</code> <span class="own">novo</span></td><td>key, value JSON, is_public</td><td>UQ key; lida em cache; segredos ficam no ambiente, fora desta tabela</td></tr>
+<tr><td><code>activity_logs</code></td><td>actor_id, action, subject_type, subject_id, changes JSON, ip_address, user_agent, created_at</td><td>Somente inserção; idx (subject_type, subject_id), (actor_id, created_at), (action, created_at)</td></tr>
+</table></div>
+</section>
+
+<section id="er">
+<h2>5. Diagrama de relacionamentos</h2>
+<p>O diagrama está dividido por domínio, pois um único desenho com 44 tabelas ficaria ilegível. Colunas estão na seção anterior.</p>
+<h3>Identidade e público</h3>
+<div class="scroll"><pre class="mermaid">
+erDiagram
+  users ||--o{ user_roles : possui
+  roles ||--o{ user_roles : atribui
+  roles ||--o{ role_permissions : concede
+  permissions ||--o{ role_permissions : compoe
+  users ||--o{ user_permissions : excecoes
+  permissions ||--o{ user_permissions : referencia
+  users ||--o| students : perfil
+  users ||--o| teachers : perfil
+  students ||--o{ student_group_members : participa
+  student_groups ||--o{ student_group_members : contem
+  student_groups ||--o{ audience_targets : destino
+  students ||--o{ audience_targets : destino
+</pre></div>
+<h3>Materiais</h3>
+<div class="scroll"><pre class="mermaid">
+erDiagram
+  category_types ||--o{ categories : classifica
+  categories ||--o{ categories : subcategoria
+  categories ||--o{ material_categories : agrupa
+  materials ||--o{ material_categories : pertence
+  teachers ||--o{ materials : responsavel
+  teachers ||--o{ material_collaborators : colabora
+  materials ||--o{ material_collaborators : tem
+  teachers ||--o{ teacher_categories : autorizado
+  categories ||--o{ teacher_categories : permite
+  materials ||--o{ material_files : anexa
+  uploads ||--o{ material_files : armazena
+  video_assets |o--o{ materials : reproduz
+  materials ||--o{ material_tags : marca
+  tags ||--o{ material_tags : usada
+  materials ||--o| material_search : indexa
+  materials ||--o{ material_daily_stats : mede
+</pre></div>
+<h3>Home e experiência do aluno</h3>
+<div class="scroll"><pre class="mermaid">
+erDiagram
+  home_layouts ||--o{ home_sections : organiza
+  home_layouts ||--o{ banners : exibe
+  home_sections ||--o{ home_section_items : reune
+  materials ||--o{ home_section_items : aparece
+  categories |o--o{ home_sections : alimenta
+  materials |o--o{ banners : destaca
+  students ||--o{ favorites : salva
+  materials ||--o{ favorites : favoritado
+  students ||--o{ watch_progress : registra
+  materials ||--o{ watch_progress : medido
+  students ||--o{ watch_history : acessa
+  materials ||--o{ watch_history : acessado
+</pre></div>
+<h3>Olavo TV e comunicação</h3>
+<div class="scroll"><pre class="mermaid">
+erDiagram
+  live_channels ||--o{ live_schedules : grade
+  live_channels ||--o{ live_streams : transmite
+  live_schedules ||--o{ live_streams : realiza
+  teachers |o--o{ live_schedules : apresenta
+  categories |o--o{ live_schedules : materia
+  live_streams |o--o| materials : gera_gravacao
+  live_schedules |o--o{ banners : destaca
+  notifications ||--o{ notification_recipients : envia
+  users ||--o{ notification_recipients : recebe
+  users ||--o{ push_subscriptions : dispositivo
+  announcements ||--o{ announcement_reads : confirma
+  students ||--o{ announcement_reads : le
+  announcements |o--o{ banners : destaca
+  users |o--o{ activity_logs : executa
+</pre></div>
+</section>
+
+<section id="permissoes">
+<h2>6. Perfis e permissões</h2>
+<p>A autorização acontece em três camadas, todas no backend. O frontend apenas esconde o que o usuário não pode fazer.</p>
+<ol class="text">
+  <li><strong>Permissão:</strong> o usuário tem <code>materials.publish</code>? Resultado: papéis somados, mais exceções em <code>user_permissions</code>, com <code>deny</code> prevalecendo.</li>
+  <li><strong>Escopo:</strong> a Policy verifica se o professor é dono do material e está autorizado naquela matéria.</li>
+  <li><strong>Público:</strong> <code>MaterialAccessService</code> verifica status, período e destino. O mesmo critério existe como scope <code>visibleTo($user)</code> nas listagens, evitando divergência entre lista e acesso direto.</li>
+</ol>
+<p>Regra de acesso do aluno: o material está publicado, é visível para o aluno e tem ao menos uma categoria ativa e visível. Restrições se somam. Administrador pode definir novos papéis no painel, combinando as permissões existentes.</p>
+<div class="scroll"><table>
+<tr><th>Permissão</th><th class="c">Admin</th><th class="c">Professor</th><th class="c">Aluno</th></tr>
+<tr><td>Ver conteúdos liberados, favoritos, histórico, perfil</td><td class="c yes">Sim</td><td class="c yes">Sim</td><td class="c yes">Sim</td></tr>
+<tr><td><code>materials.manage_all</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+<tr><td><code>materials.create</code> / <code>update</code></td><td class="c yes">Todos</td><td class="c">Próprios, em matérias autorizadas</td><td class="c">Não</td></tr>
+<tr><td><code>materials.publish</code></td><td class="c yes">Sim</td><td class="c">Conforme configuração</td><td class="c">Não</td></tr>
+<tr><td><code>materials.review</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+<tr><td><code>materials.bulk</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+<tr><td><code>analytics.view</code></td><td class="c yes">Geral</td><td class="c">Próprias</td><td class="c">Não</td></tr>
+<tr><td><code>cast.update</code></td><td class="c yes">Todos</td><td class="c">Próprio perfil</td><td class="c">Não</td></tr>
+<tr><td><code>home.manage</code>, <code>categories.manage</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+<tr><td><code>students.manage</code>, <code>teachers.manage</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+<tr><td><code>announcements.manage</code>, <code>notifications.send</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+<tr><td><code>live.manage</code>, <code>live.keys.view</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+<tr><td><code>settings.manage</code>, <code>roles.manage</code>, <code>audit.view</code></td><td class="c yes">Sim</td><td class="c">Não</td><td class="c">Não</td></tr>
+</table></div>
+</section>
+
+<section id="fluxos">
+<h2>7. Fluxos de utilização</h2>
+<h3>Ciclo de vida do material</h3>
+<div class="scroll"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> rascunho
+  rascunho --> em_revisao: professor envia
+  rascunho --> agendado: define data
+  rascunho --> publicado: publica agora
+  em_revisao --> publicado: admin aprova
+  em_revisao --> agendado: admin aprova com data
+  em_revisao --> rascunho: admin devolve
+  agendado --> publicado: agendador
+  agendado --> rascunho: cancela
+  publicado --> arquivado: arquiva
+  arquivado --> publicado: restaura
+</pre></div>
+<p>A transição fica em <code>PublishMaterial</code>, que dispara o evento uma única vez. Um comando agendado roda a cada minuto para publicar os agendados. A configuração de cada professor define se o envio vai direto ou passa por revisão.</p>
+
+<h3>Aluno abre a home</h3>
+<div class="scroll"><pre class="mermaid">
+sequenceDiagram
+  participant N as Navegador
+  participant A as API
+  participant C as Redis
+  participant M as MySQL
+  N->>A: GET /home
+  A->>C: estrutura do layout publicado
+  C-->>A: seções e hero
+  A->>A: filtra por período e público
+  A-->>N: seções visíveis e primeiros cards
+  Note over N: próxima seção entra na tela
+  N->>A: GET /home/sections/{id}/items
+  A->>M: consulta da origem da seção
+  M-->>A: materiais visíveis ao aluno
+  A-->>N: página de cards
+</pre></div>
+<p>Separar estrutura e itens permite usar cache na parte compartilhada. Seções pessoais, como Continuar assistindo, não entram em cache global. Ao publicar um layout, o evento limpa o cache e a home muda imediatamente.</p>
+
+<h3>Aluno assiste a uma videoaula</h3>
+<div class="scroll"><pre class="mermaid">
+sequenceDiagram
+  participant P as Player
+  participant A as API
+  participant S as Cloudflare Stream
+  P->>A: GET /materials/{slug}/playback
+  A->>A: verifica acesso
+  A-->>P: URL HLS assinada, legendas e posição salva
+  P->>S: reproduz manifesto e segmentos
+  loop a cada 15 segundos
+    P->>A: PUT /materials/{slug}/progress
+  end
+  Note over P,A: também em pausa, fim e saída da página
+  P->>A: fetch keepalive com a última posição
+</pre></div>
+<p>Na saída da página usaremos <code>fetch</code> com <code>keepalive</code> em vez de <code>sendBeacon</code>, que não envia o cabeçalho CSRF exigido pelo Sanctum. O material é concluído ao atingir 95% ou por ação manual.</p>
+
+<h3>Administrador monta a home</h3>
+<ol class="text">
+  <li>Abre o construtor. O sistema cria um rascunho copiado do layout publicado, ou retoma o existente.</li>
+  <li>Cria seções, define origens e público, e arrasta para reordenar. Cada alteração é salva no rascunho.</li>
+  <li>Pré-visualiza com os componentes reais do aluno, escolhendo o público simulado.</li>
+  <li>Publica. O anterior é arquivado, o que permite restaurar a home em caso de erro.</li>
+</ol>
+</section>
+
+<section id="api">
+<h2>8. Contratos da API</h2>
+<p>REST em <code>/api/v1</code>, JSON, autenticação por cookie do Sanctum na SPA e token no futuro aplicativo. A documentação será gerada a partir do código com Scramble, em formato OpenAPI, e os tipos TypeScript derivam dela.</p>
+<h3>Formato padrão</h3>
+<div class="scroll"><pre class="code">// Sucesso em lista
+{ "data": [ ... ], "meta": { "next_cursor": "eyJpZCI6...", "per_page": 24 } }
+
+// Erro de validação: HTTP 422
+{ "message": "Alguns campos precisam de correção.", "code": "validation_failed",
+  "errors": { "title": ["Informe o título."] } }
+
+// Erro de acesso: HTTP 403
+{ "message": "Este conteúdo não está disponível para sua turma.", "code": "material_forbidden" }</pre></div>
+<p>Códigos usados: 200, 201, 204, 401, 403, 404, 409 (transição de estado inválida), 422 e 429. Listagens longas usam cursor, e tabelas administrativas usam paginação numerada.</p>
+<h3>Rotas principais</h3>
+<div class="scroll"><table>
+<tr><th>Módulo</th><th>Rotas</th></tr>
+<tr><td>Autenticação</td><td><code>POST /auth/login</code>, <code>POST /auth/logout</code>, <code>GET /me</code>, <code>PATCH /me</code>, <code>PUT /me/password</code>, <code>GET /me/sessions</code>, <code>DELETE /me/sessions/{id}</code>, recuperação de senha</td></tr>
+<tr><td>Home</td><td><code>GET /home</code>, <code>GET /home/sections/{id}/items</code></td></tr>
+<tr><td>Catálogo</td><td><code>GET /materials</code> com filtros e ordenação, <code>GET /materials/{slug}</code>, <code>GET /materials/{slug}/related</code>, <code>GET /categories</code>, <code>GET /search</code></td></tr>
+<tr><td>Acesso a mídia</td><td><code>GET /materials/{slug}/playback</code>, <code>GET /materials/{slug}/file</code>, <code>PUT /materials/{slug}/progress</code>, <code>POST /materials/{slug}/complete</code></td></tr>
+<tr><td>Aluno</td><td><code>GET|PUT|DELETE /me/favorites/{material}</code>, <code>GET /me/favorites</code>, <code>GET|DELETE /me/history</code>, <code>GET /me/continue-watching</code></td></tr>
+<tr><td>Olavo TV</td><td><code>GET /tv/now</code>, <code>GET /tv/schedule</code>, <code>GET /tv/recordings</code>, <code>GET /tv/streams/{id}/playback</code></td></tr>
+<tr><td>Elenco</td><td><code>GET /teachers</code>, <code>GET /teachers/{slug}</code>, <code>GET /teachers/{slug}/materials</code></td></tr>
+<tr><td>Comunicação</td><td><code>GET /notifications</code>, <code>POST /notifications/{id}/read</code>, <code>POST /notifications/read-all</code>, <code>GET /announcements</code>, <code>POST /announcements/{id}/ack</code></td></tr>
+<tr><td>Uploads</td><td><code>POST /uploads</code>, <code>POST /uploads/{id}/complete</code>, <code>GET /uploads/{id}</code>, <code>GET /uploads/{id}/access</code></td></tr>
+<tr><td>Administração</td><td>CRUD em <code>/admin/materials</code>, <code>/admin/categories</code>, <code>/admin/category-types</code>, <code>/admin/teachers</code>, <code>/admin/students</code>, <code>/admin/groups</code>, <code>/admin/announcements</code>, <code>/admin/roles</code>, <code>/admin/live/channels</code>, <code>/admin/live/schedules</code></td></tr>
+<tr><td>Ações administrativas</td><td><code>POST /admin/materials/bulk</code>, <code>POST /admin/materials/{id}/duplicate</code>, <code>POST /admin/materials/{id}/release|approve|reject|unschedule|archive|restore</code>, <code>POST /admin/students/{id}/block|unblock|reset-password</code>, <code>POST /admin/live/streams/{id}/publish-recording</code></td></tr>
+<tr><td>Construtor da home</td><td><code>GET|POST /admin/home/layouts</code>, <code>PUT /admin/home/layouts/{id}/sections/order</code>, CRUD de seções e banners, <code>GET /admin/home/layouts/{id}/preview</code>, <code>POST /admin/home/layouts/{id}/publish</code></td></tr>
+<tr><td>Professor</td><td><code>GET /teacher/dashboard</code>, <code>GET /teacher/materials</code>, <code>GET|PATCH /teacher/profile</code>, <code>GET /teacher/categories</code></td></tr>
+<tr><td>Painel</td><td><code>GET /admin/dashboard/summary</code>, <code>/top-materials</code>, <code>/activity</code>, <code>GET /admin/activity-logs</code>, <code>GET|PATCH /admin/settings</code></td></tr>
+<tr><td>Webhook</td><td><code>POST /webhooks/video/{provider}</code>, com assinatura validada e sem sessão</td></tr>
+</table></div>
+<h3>Exemplo: reprodução</h3>
+<div class="scroll"><pre class="code">GET /api/v1/materials/revolucao-industrial-aula-1/playback
+
+{ "data": {
+    "kind": "hls",
+    "url": "https://.../manifest/video.m3u8?token=...",
+    "expires_at": "2026-11-04T18:30:00Z",
+    "subtitles": [ { "locale": "pt-BR", "url": "..." } ],
+    "resume_at_seconds": 1284,
+    "duration_seconds": 3120,
+    "next": { "slug": "revolucao-industrial-aula-2", "title": "A Segunda Revolução" }
+} }</pre></div>
+<h3>Canais em tempo real (Reverb)</h3>
+<ul>
+  <li><code>private-user.{id}</code>: novas notificações.</li>
+  <li><code>private-tv</code>: início, fim e mudança de status de transmissão, para a página atualizar sem recarregar.</li>
+</ul>
+</section>
+
+<section id="storage">
+<h2>9. Estratégia de armazenamento</h2>
+<p>Dois buckets R2 separam o risco. O público serve capas e fotos com CDN pelo domínio próprio. O privado guarda arquivos de alunos e professores, sem acesso público.</p>
+<div class="scroll"><table>
+<tr><th>Prefixo</th><th>Bucket</th><th>Conteúdo</th><th>Entrega</th></tr>
+<tr><td><code>incoming/{uuid}</code></td><td>Privado</td><td>Quarentena, antes de validar</td><td>Nunca entregue</td></tr>
+<tr><td><code>materials/{uuid}/</code></td><td>Privado</td><td>PDF, DOCX, PPTX, XLSX, áudio, imagens restritas</td><td>URL pré-assinada de 10 minutos</td></tr>
+<tr><td><code>previews/{uuid}.pdf</code></td><td>Privado</td><td>Documento convertido para leitura</td><td>URL pré-assinada</td></tr>
+<tr><td><code>public/covers/</code>, <code>public/cast/</code></td><td>Público</td><td>Capas, fotos, banners em WebP e tamanhos variados</td><td>CDN com cache longo</td></tr>
+</table></div>
+<h3>Fluxo de upload</h3>
+<div class="scroll"><pre class="mermaid">
+sequenceDiagram
+  participant N as Navegador
+  participant A as API
+  participant R as R2
+  participant W as Worker
+  N->>A: POST /uploads com nome, tipo e tamanho
+  A->>A: valida permissão, formato e limite
+  A-->>N: URL pré-assinada para incoming/
+  N->>R: envia o arquivo
+  N->>A: POST /uploads/{id}/complete
+  A->>W: enfileira validação
+  W->>R: lê o início do arquivo
+  W->>W: confere MIME real, tamanho e checksum
+  W->>R: move para o destino definitivo
+  W->>W: gera variantes e prévia
+  W-->>N: status pronto via Reverb
+</pre></div>
+<h3>Limites iniciais</h3>
+<p>Imagens 15 MB, documentos 100 MB, áudio 300 MB. Vídeos seguem diretamente ao Cloudflare Stream por upload retomável, com limite padrão de 10 GB. Multipart entra se o limite de 300 MB aumentar, pois um único PUT atende aos formatos atuais. Os limites ficam em <code>config/olavo.php</code> e irão para <code>settings</code> na fase 8. Lista de formatos permitidos no servidor, com verificação do conteúdo real, não da extensão.</p>
+<h3>Documentos do Office</h3>
+<p>DOC, DOCX e PPTX são convertidos para PDF por LibreOffice em um worker isolado e abertos no mesmo leitor. XLSX oferece download, pois planilhas perdem estrutura em PDF. Evitei o visualizador online da Microsoft, que exige enviar uma URL do arquivo a terceiros.</p>
+<div class="note">Uma limitação do R2 afeta o desenho: URLs pré-assinadas funcionam só no domínio de API do R2, não em domínio próprio. Por isso arquivos privados não passam pelo cache da CDN, e segmentos de vídeo privados não ficam no R2. Para documentos isso é adequado. Para vídeo, é um dos motivos de usar o Cloudflare Stream.</div>
+</section>
+
+<section id="streaming">
+<h2>10. Estratégia de streaming</h2>
+<h3>Comparação</h3>
+<div class="scroll"><table>
+<tr><th>Critério</th><th>Cloudflare Stream (recomendado)</th><th>Mux</th><th>Próprio (MediaMTX, FFmpeg, R2)</th></tr>
+<tr><td>Ingestão</td><td>RTMPS e SRT</td><td>RTMPS e SRT (fonte não oficial)</td><td>RTMP, RTMPS e SRT, a confirmar em prova de conceito</td></tr>
+<tr><td>Saída e qualidades</td><td>HLS com transcodificação incluída</td><td>HLS com transcodificação incluída</td><td>Exige FFmpeg, GPU ou CPU dedicada</td></tr>
+<tr><td>Gravação</td><td>Opção por entrada</td><td>Incluída</td><td>Construir</td></tr>
+<tr><td>Acesso privado</td><td>URLs assinadas</td><td>URLs assinadas</td><td>Construir validação de token na borda</td></tr>
+<tr><td>Modelo de custo</td><td>US$ 5 por 1.000 min armazenados; US$ 1 por 1.000 min entregues</td><td>Por minuto, itens separados; consultar tabela</td><td>Servidores mais horas de operação</td></tr>
+<tr><td>Risco em aula ao vivo</td><td>Do fornecedor</td><td>Do fornecedor</td><td>Da equipe do Olavo</td></tr>
+<tr><td>Afinidade</td><td>Mesmo fornecedor do R2</td><td>Fornecedor adicional</td><td>Controle total</td></tr>
+</table></div>
+<p><strong>Estimativa de custo com o Stream:</strong> 500 alunos assistindo 2 horas geram 60.000 minutos, cerca de US$ 60 por live. O acervo de 2.000 minutos gravados custa cerca de US$ 10 de armazenamento. Se o volume crescer muito, a interface <code>VideoProvider</code> permite migrar sem mudar o restante do sistema.</p>
+<p>Antes de fechar, faremos uma prova de conceito com o encoder real, confirmando: formatos de saída, eventos de webhook e URLs assinadas em live. Meu levantamento confirmou RTMPS, SRT, gravação e preços na documentação oficial, mas não os nomes dos eventos de webhook.</p>
+
+<h3>Ciclo de uma transmissão</h3>
+<div class="scroll"><pre class="mermaid">
+sequenceDiagram
+  participant E as Encoder
+  participant S as Stream
+  participant L as Laravel
+  participant B as Alunos
+  E->>S: inicia envio com a chave do canal
+  S->>L: webhook conectado
+  L->>L: vincula à programação e marca ao vivo
+  L-->>B: evento Reverb e notificação
+  B->>L: GET /tv/streams/{id}/playback
+  L-->>B: URL HLS assinada, após verificar público
+  B->>S: assiste
+  E--xS: sinal cai
+  S->>L: webhook desconectado
+  L->>L: agenda encerramento em 3 minutos
+  alt encoder volta a tempo
+    S->>L: webhook conectado
+    L->>L: cancela encerramento
+  else tempo esgotado
+    L-->>B: transmissão encerrada
+    S->>L: gravação pronta
+    L->>L: cria rascunho de material
+  end
+</pre></div>
+<p>O prazo de 3 minutos evita que uma queda breve encerre a aula e dispare notificações repetidas. Webhooks são idempotentes, usando o identificador do provedor, porque podem chegar repetidos ou fora de ordem. Um job periódico consulta o provedor como garantia caso um webhook se perca.</p>
+<p>O início também é vinculado pela janela de horário: se há programação no canal por volta daquele momento, ela vira <code>ao vivo</code>. Se não há, cria-se uma programação avulsa com título padrão, editável depois. A gravação entra como rascunho, e o administrador completa capa e descrição antes de publicar.</p>
+
+<h3>Player</h3>
+<p>O player tem interface própria sobre o elemento de vídeo nativo, com um adaptador por origem: <code>HlsAdapter</code> (hls.js, ou suporte nativo do Safari), <code>Mp4Adapter</code> e <code>EmbedAdapter</code> para YouTube e Vimeo. Controles, velocidades de 0.5x a 2x, legendas WebVTT, qualidade e tela cheia ficam num só componente, compartilhado por videoaulas e Olavo TV.</p>
+</section>
+
+<section id="seguranca">
+<h2>Segurança e desempenho</h2>
+<div class="scroll"><table>
+<tr><th>Tema</th><th>Medida</th></tr>
+<tr><td>Autenticação</td><td>Cookie HttpOnly, Secure e SameSite com CSRF; limite de tentativas; senhas com Argon2id; reset que encerra sessões ativas</td></tr>
+<tr><td>Sessões</td><td>Lista e encerramento pelo usuário; limite simultâneo configurável; bloqueio do aluno encerra todas</td></tr>
+<tr><td>Entradas</td><td>Form Requests em toda escrita; HTML de descrições sanitizado no servidor; CSP restritiva; iframes só de domínios permitidos</td></tr>
+<tr><td>Uploads</td><td>Lista permitida, MIME real, limites, quarentena; antivírus ClamAV nos documentos; arquivos nunca servidos pelo domínio da aplicação</td></tr>
+<tr><td>Segredos</td><td>Chaves de transmissão criptografadas e visíveis só com <code>live.keys.view</code>; visualização auditada; rotação pelo painel</td></tr>
+<tr><td>Auditoria</td><td>Logins, publicações, permissões, bloqueios, ações em massa, acesso a chaves; dados sensíveis removidos dos logs</td></tr>
+<tr><td>LGPD</td><td>Registro de aceite de termos, exportação de dados do titular, anonimização na exclusão, retenção definida para logs e histórico</td></tr>
+<tr><td>Cache</td><td>Redis com invalidação por evento para categorias, configurações e estrutura da home; ETag em dados públicos</td></tr>
+<tr><td>Desempenho do progresso</td><td>Upsert por chave única, limite por usuário e nenhuma consulta adicional no caminho quente; o dashboard lê tabelas agregadas por job noturno, nunca o histórico bruto</td></tr>
+<tr><td>Frontend</td><td>Rotas sob demanda, imagens responsivas em WebP com <code>loading="lazy"</code>, seções carregadas ao entrar na tela</td></tr>
+<tr><td>Operação</td><td>Backups diários do MySQL com teste de restauração, monitoramento de erros, CI com testes em todo push</td></tr>
+</table></div>
+<h3>Comportamento dos cards</h3>
+<p>Um card que cresce dentro do carrossel é cortado pelo <code>overflow</code> que o carrossel exige. Por isso a versão expandida será renderizada em um portal sobre a página, posicionada a partir do card, após 300 ms de hover. No toque não há hover: o primeiro toque abre os detalhes, com favoritar acessível na própria tela.</p>
+</section>
+
+<section id="interpretacoes">
+<h2>Limites e interpretações</h2>
+<p>Nenhum requisito foi removido. Estes são os pontos onde a tecnologia impõe limite ou onde precisei interpretar:</p>
+<div class="scroll"><table>
+<tr><th>Requisito</th><th>O que será entregue</th><th>Motivo</th></tr>
+<tr><td>Permissão de download</td><td>Oculta o botão e bloqueia a rota de download, com URLs curtas</td><td>Não impede cópia. Quem visualiza um PDF no navegador já recebeu o arquivo. Protege contra uso casual, não contra extração deliberada.</td></tr>
+<tr><td>Proteção de vídeo</td><td>URL assinada e controle de acesso</td><td>Não há DRM nem marca d'água. Se houver risco real de pirataria, pode ser avaliado depois.</td></tr>
+<tr><td>Player próprio em vídeo externo</td><td>Controles nativos da plataforma, com progresso salvo pela API do YouTube ou Vimeo</td><td>Essas plataformas limitam a sobreposição do player. Velocidade e qualidade ficam a cargo delas.</td></tr>
+<tr><td>Link incorporado</td><td>Só em domínios permitidos; demais abrem em nova aba</td><td>Muitos sites proíbem iframe e isso também é um risco de segurança.</td></tr>
+<tr><td>Recomendados</td><td>Regras por categorias e histórico</td><td>A especificação pede estrutura preparada. Recomendação inteligente segue como item futuro.</td></tr>
+<tr><td>Pesquisa</td><td>Busca por prefixo sem acentos, em todos os campos pedidos</td><td>FULLTEXT não corrige erros de digitação. Corrigível com Meilisearch.</td></tr>
+<tr><td>Identidade visual</td><td>Layout e interação de streaming, com marca do Olavo</td><td>Conforme a especificação, sem marca, logotipo ou elementos proprietários da Netflix.</td></tr>
+</table></div>
+<h3>Preparado para o futuro, sem construir agora</h3>
+<p>Questões, simulados, redações e trilhas entram como módulos novos que referenciam <code>students</code> e <code>categories</code>. Pagamentos e matrículas usam <code>students.external_ref</code> e podem incluir alunos em <code>student_groups</code>, controlando acesso sem alterar o motor de público. O aplicativo mobile reutiliza a API com tokens do Sanctum.</p>
+</section>
+
+<section id="roadmap">
+<h2>Plano por fases</h2>
+<p>A ordem segue as prioridades do projeto, respeitando dependências: a home depende de materiais, e o player depende da reprodução autorizada. Cada fase termina com interface, API, persistência em MySQL, permissões, testes e verificação responsiva.</p>
+<div class="scroll"><table>
+<tr><th>Fase</th><th>Entrega</th><th>Cobre na especificação</th><th>Testes obrigatórios</th></tr>
+<tr><td>0. Fundação</td><td>Monorepo, CI, migrations base, login, papéis, layouts, design system</td><td>§13, §15, §16</td><td>Autenticação, permissões</td></tr>
+<tr><td>1. Catálogo e materiais</td><td>Categorias, tipos, uploads, publicação, biblioteca administrativa, público</td><td>§5, §9.3, §9.4</td><td>Publicação, acesso, categorias</td></tr>
+<tr><td>2. Experiência do aluno</td><td>Cabeçalho, hero, cards, carrosséis, explorar, detalhes, visualizadores, seeders</td><td>§3, §4.1 a §4.3, §18</td><td>Acesso aos conteúdos</td></tr>
+<tr><td>3. Player e progresso</td><td>Player, Continuar assistindo, histórico, favoritos, perfil</td><td>§4.4 a §4.6, §6</td><td>Progresso, favoritos</td></tr>
+<tr><td>4. Construtor da home</td><td>Layouts, seções, drag and drop, hero, prévia, publicação</td><td>§9.2</td><td>Público, período, publicação</td></tr>
+<tr><td>5. Elenco e professor</td><td>Página Elenco, perfil, gestão de professores, painel do professor, aprovação</td><td>§8, §9.5, §10</td><td>Escopo do professor</td></tr>
+<tr><td>6. Olavo TV</td><td>Prova de conceito, canais, programação, status, gravações</td><td>§7, §9.8</td><td>Transmissões, webhooks</td></tr>
+<tr><td>7. Comunicação e busca</td><td>Avisos, notificações em tempo real, pesquisa global</td><td>§9.7, §11, §12</td><td>Destinatários, busca</td></tr>
+<tr><td>8. Gestão e entrada em produção</td><td>Alunos e turmas, dashboard, configurações, LGPD, carga, documentação</td><td>§9.1, §9.6, §9.9, §17</td><td>Regressão completa</td></tr>
+</table></div>
+<p>A fase 2 usa dados reais do banco, criados por seeders. Assim, a experiência visual, prioridade número um, aparece cedo sem telas ilustrativas.</p>
+<h3>Requisitos do ambiente de desenvolvimento</h3>
+<p>Sem Docker. O projeto fica em <code>C:\laragon\www\olavo-digital</code> e usa PHP 8.3, MySQL 8.4 e Composer do Laragon, iniciados por <code>scripts\dev.ps1</code>. Em desenvolvimento, filas e cache usam MySQL.</p>
+<p class="sources">Fontes: <a href="https://developers.cloudflare.com/stream/stream-live/">Stream Live</a>, <a href="https://developers.cloudflare.com/stream/pricing/index.md">preços do Stream</a>, <a href="https://developers.cloudflare.com/r2/api/s3/presigned-urls/">URLs pré-assinadas do R2</a>, <a href="https://laravel.com/docs/master/releases">versões do Laravel</a>, <a href="https://www.fastpix.com/blog/best-mux-alternatives-2026">comparação de Mux</a>. Preços consultados em 4 nov. 2026.</p>
+</section>
+</main>
+</div>
