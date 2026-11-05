@@ -2,6 +2,7 @@
 
 namespace App\Modules\Home\Services;
 
+use App\Modules\Home\Models\Banner;
 use App\Modules\Materials\Enums\MaterialType;
 use App\Modules\Materials\Models\Material;
 use App\Modules\Uploads\Services\UploadStorage;
@@ -12,6 +13,16 @@ class HeroPreview
 {
     public function __construct(private UploadStorage $storage)
     {
+    }
+
+    /** @return array{kind: string, url: string, loop?: bool}|null */
+    public function forBanner(Banner $banner, ?Material $material): ?array
+    {
+        return match ($banner->media_type) {
+            'image' => null,
+            'video' => $banner->video?->isReady() ? ['kind' => 'file', 'url' => $this->storage->temporaryUrl($banner->video), 'loop' => true] : null,
+            default => $material ? $this->for($material) : null,
+        };
     }
 
     /** @return array{kind: string, url: string}|null */

@@ -7,10 +7,16 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ApiError } from '@/services/http'
-import type { BuilderBanner, Upload } from '@/types/api'
+import type { BuilderBanner, HeroMediaType, Upload } from '@/types/api'
 import { homeBuilderApi } from '../api'
 import { MaterialPicker, type PickedMaterial } from './MaterialPicker'
 import { AudienceField, fromIso, PeriodFields, toIso } from './SharedFields'
+
+const MEDIA_OPTIONS: { value: HeroMediaType; label: string; hint: string }[] = [
+  { value: 'image', label: 'Imagem', hint: 'Mostra só a imagem, sem vídeo.' },
+  { value: 'preview', label: 'Prévia do vídeo selecionado', hint: 'Toca uma prévia automática do conteúdo em vídeo escolhido abaixo.' },
+  { value: 'video', label: 'Vídeo enviado', hint: 'Toca em repetição o vídeo que você enviar, sem som. Use MP4 ou WebM.' },
+]
 
 interface BannerEditorProps {
   layoutId: number
@@ -22,6 +28,8 @@ interface BannerEditorProps {
 export function BannerEditor({ layoutId, banner, onSaved, onClose }: BannerEditorProps) {
   const [material, setMaterial] = useState<PickedMaterial | null>(banner?.material ?? null)
   const [image, setImage] = useState<Upload | null>(banner?.image ?? null)
+  const [video, setVideo] = useState<Upload | null>(banner?.video ?? null)
+  const [mediaType, setMediaType] = useState<HeroMediaType>(banner?.media_type ?? 'image')
   const [form, setForm] = useState({
     title: banner?.title ?? '',
     description: banner?.description ?? '',
@@ -42,6 +50,8 @@ export function BannerEditor({ layoutId, banner, onSaved, onClose }: BannerEdito
         ends_at: toIso(form.ends_at),
         material_id: material?.id ?? null,
         image_upload_id: image?.id ?? null,
+        media_type: mediaType,
+        video_upload_id: mediaType === 'video' ? video?.id ?? null : null,
       }
       return banner ? homeBuilderApi.updateBanner(banner.id, input) : homeBuilderApi.createBanner(layoutId, input)
     },
@@ -61,6 +71,21 @@ export function BannerEditor({ layoutId, banner, onSaved, onClose }: BannerEdito
         <Button type="button" variant="ghost" size="icon" aria-label="Fechar" onClick={onClose}><X className="size-4" /></Button>
       </div>
 
+      <fieldset className="grid gap-2">
+        <legend className="mb-1 text-sm font-medium">O que aparece no destaque</legend>
+        {MEDIA_OPTIONS.map((option) => (
+          <label key={option.value} className="flex items-start gap-2 text-sm">
+            <input type="radio" name="banner-media" className="mt-0.5 accent-brand" checked={mediaType === option.value} onChange={() => setMediaType(option.value)} />
+            <span>
+              <span className="block">{option.label}</span>
+              <span className="block text-xs text-muted-foreground">{option.hint}</span>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+
+      {mediaType === 'video' && <UploadField label="Vídeo do destaque" purpose="material" accept=".mp4,.webm" value={video} error={error?.fieldError('video_upload_id')} onChange={setVideo} />}
+
       <div className="grid gap-2">
         <p className="text-sm font-medium">Conteúdo</p>
         {material ? (
@@ -71,7 +96,8 @@ export function BannerEditor({ layoutId, banner, onSaved, onClose }: BannerEdito
         ) : (
           <MaterialPicker label="Buscar conteúdo" excluded={[]} onPick={setMaterial} />
         )}
-        <p className="text-xs text-muted-foreground">Vídeos tocam uma prévia automática no destaque.</p>
+        {error?.fieldError('material_id') && <p className="text-sm text-destructive">{error.fieldError('material_id')}</p>}
+        <p className="text-xs text-muted-foreground">{mediaType === 'preview' ? 'Escolha um conteúdo em vídeo.' : 'Opcional: o botão do destaque abre este conteúdo.'}</p>
       </div>
 
       <div className="grid gap-2">
@@ -95,7 +121,7 @@ export function BannerEditor({ layoutId, banner, onSaved, onClose }: BannerEdito
         </div>
       </div>
 
-      <UploadField label="Imagem (opcional, 16:9)" purpose="image" accept=".jpg,.jpeg,.png,.webp" value={image} onChange={setImage} />
+      <UploadField label={mediaType === 'image' ? 'Imagem (16:9)' : 'Imagem de capa (16:9), exibida antes do vídeo'} purpose="image" accept=".jpg,.jpeg,.png,.webp" value={image} onChange={setImage} />
       <PeriodFields prefix="banner" startsAt={form.starts_at} endsAt={form.ends_at} error={error?.fieldError('ends_at')} onChange={(field, value) => setForm({ ...form, [field]: value })} />
       <AudienceField value={form.group_ids} onChange={(group_ids) => setForm({ ...form, group_ids })} />
 

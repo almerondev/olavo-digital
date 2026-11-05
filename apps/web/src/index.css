@@ -132,7 +132,7 @@
     @apply font-sans;
     }
 }
-/* Identidade provisória do Olavo Digital: âmbar sobre grafite. As cores virão de settings na fase 8. */
+/* Identidade provisória do Olavo TV+: âmbar sobre grafite. As cores virão de settings na fase 8. */
 :root {
   --brand: oklch(0.8 0.16 78);
   --brand-foreground: oklch(0.2 0.03 70);

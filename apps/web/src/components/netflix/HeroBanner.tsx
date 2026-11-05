@@ -34,10 +34,10 @@ function HeroPreview({ hero }: { hero: HomeHero }) {
   }, [preview])
 
   useEffect(() => {
-    if (!visible) return
+    if (!visible || preview?.loop) return
     const timer = window.setTimeout(() => setVisible(false), PREVIEW_LIMIT_MS)
     return () => window.clearTimeout(timer)
-  }, [visible])
+  }, [visible, preview?.loop])
 
   useEffect(() => {
     if (!container.current) return
@@ -63,6 +63,7 @@ function HeroPreview({ hero }: { hero: HomeHero }) {
             src={preview.url}
             muted={muted}
             autoPlay
+            loop={preview.loop}
             playsInline
             preload="auto"
             onPlaying={() => setVisible(true)}

@@ -12,8 +12,9 @@ class SettingsSeeder extends Seeder
     public function run(): void
     {
         $defaults = [
-            'platform.name' => 'Olavo Digital',
+            'platform.name' => 'Olavo TV+',
             'platform.tagline' => 'Seu pré-vestibular em qualquer tela.',
+            'app.android_url' => '/downloads/olavo-tv-plus.apk',
         ];
 
         foreach ($defaults as $key => $value) {

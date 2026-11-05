@@ -4,6 +4,8 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { AppDownload } from '@/modules/native/AppDownload'
+import { isNativeApp } from '@/modules/native/push'
 import { ApiError } from '@/services/http'
 import { authApi, type Credentials } from '../api/auth'
 import { AuthShell } from '../components/AuthShell'
@@ -12,7 +14,7 @@ import { CURRENT_USER_KEY } from '../hooks/useCurrentUser'
 import { landingPath } from '../landing'
 
 export function LoginPage() {
-  const [form, setForm] = useState<Credentials>({ email: '', password: '', remember: false })
+  const [form, setForm] = useState<Credentials>({ email: '', password: '', remember: isNativeApp() })
   const navigate = useNavigate()
   const location = useLocation()
   const queryClient = useQueryClient()
@@ -76,6 +78,7 @@ export function LoginPage() {
           {login.isPending ? 'Entrando…' : 'Entrar'}
         </Button>
       </form>
+      <AppDownload />
     </AuthShell>
   )
 }

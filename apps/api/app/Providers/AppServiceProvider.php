@@ -18,6 +18,8 @@ use App\Modules\Uploads\Http\Controllers\UploadController;
 use App\Modules\Communication\Contracts\PushSender;
 use App\Modules\Communication\Listeners\NotifyAboutContent;
 use App\Modules\Communication\Models\Announcement;
+use App\Modules\Communication\Services\FcmPushSender;
+use App\Modules\Communication\Services\FirebaseCredentials;
 use App\Modules\Communication\Services\NullPushSender;
 use App\Modules\LiveTv\Events\LiveStreamStarted;
 use App\Modules\LiveTv\Models\LiveStream;
@@ -26,6 +28,7 @@ use App\Modules\Uploads\Services\LocalUploadStorage;
 use App\Modules\Uploads\Services\S3UploadStorage;
 use App\Modules\Uploads\Services\UploadStorage;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -36,7 +39,11 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PermissionResolver::class);
-        $this->app->bind(PushSender::class, NullPushSender::class);
+        $this->app->bind(PushSender::class, function () {
+            $credentials = FirebaseCredentials::load();
+
+            return $credentials ? new FcmPushSender($credentials) : new NullPushSender;
+        });
         $this->app->scoped(StudentLibrary::class);
         $this->app->bind(UploadStorage::class, fn () => config('olavo.uploads.driver') === 's3'
             ? new S3UploadStorage
@@ -74,5 +81,13 @@ class AppServiceProvider extends ServiceProvider
 
         ResetPassword::createUrlUsing(fn (User $user, string $token) => config('app.frontend_url')
             .'/redefinir-senha?token='.$token.'&email='.urlencode($user->email));
+
+        ResetPassword::toMailUsing(fn (User $user, string $token) => (new MailMessage)
+            ->subject('Defina sua senha do '.config('app.name'))
+            ->greeting('Olá, '.strtok($user->name, ' ').'!')
+            ->line('Use o botão abaixo para definir sua senha de acesso.')
+            ->action('Definir senha', ResetPassword::$createUrlCallback ? call_user_func(ResetPassword::$createUrlCallback, $user, $token) : '')
+            ->line('O link vale por 60 minutos. Se você não pediu, ignore este e-mail.')
+            ->salutation('Equipe '.config('app.name')));
     }
 }

@@ -108,7 +108,7 @@ export function DashboardPage() {
   const { totals, views_by_day: views, students_by_course: courses, recent_students: recent, top_materials: top, latest_materials: latest, recent_activity: activity } = dashboard.data
 
   return (
-    <div className="grid max-w-6xl gap-5">
+    <div className="grid max-w-6xl grid-cols-1 gap-5">
       <h1 className="font-heading text-3xl font-bold tracking-tight">Visão geral</h1>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Alunos" value={totals.students} hint={`${number.format(totals.active_students)} ativos`} />
@@ -118,11 +118,11 @@ export function DashboardPage() {
         <Stat label="Visualizações" value={totals.views} />
         <Stat label="Transmissões realizadas" value={totals.live_streams} />
       </div>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <ViewsChart data={views} />
         <CoursesChart data={courses} />
       </div>
-      <div className="grid gap-5 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <ListPanel title="Materiais mais acessados" empty={top.length === 0}>
           {top.map((item) => <Row key={item.id} left={<Link to={`/admin/materiais/${item.id}`} className="hover:underline">{item.title}</Link>} right={`${number.format(item.views)} acessos`} />)}
         </ListPanel>

@@ -1,6 +1,7 @@
 import { LogOut } from 'lucide-react'
 import { Link } from 'react-router'
 import { coverSrc } from '@/components/media/cover'
+import { cn } from '@/lib/utils'
 import { useLogout } from '@/modules/auth/hooks/useLogout'
 import type { User } from '@/types/api'
 
@@ -9,7 +10,7 @@ function initials(name: string): string {
   return (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase()
 }
 
-export function UserMenu({ user }: { user: User }) {
+export function UserMenu({ user, compact = false }: { user: User; compact?: boolean }) {
   const logout = useLogout()
   const avatar = coverSrc(user.avatar_urls)
 
@@ -27,7 +28,7 @@ export function UserMenu({ user }: { user: User }) {
         onClick={() => logout.mutate()}
         disabled={logout.isPending}
         aria-label="Sair"
-        className="rounded p-1 opacity-70 transition hover:opacity-100 disabled:opacity-40"
+        className={cn('rounded p-1 opacity-70 transition hover:opacity-100 disabled:opacity-40', compact && 'hidden md:block')}
       >
         <LogOut className="size-4" />
       </button>

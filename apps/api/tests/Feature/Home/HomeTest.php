@@ -268,6 +268,23 @@ class HomeTest extends TestCase
         }
     }
 
+    public function test_hero_media_can_be_image_preview_or_uploaded_video(): void
+    {
+        $video = Upload::create([
+            'uuid' => (string) Str::uuid(), 'disk' => 'uploads_private', 'object_key' => 'hero.mp4', 'purpose' => 'material',
+            'file_class' => 'video', 'original_name' => 'hero.mp4', 'mime_type' => 'video/mp4', 'size_bytes' => 10, 'status' => 'ready',
+        ]);
+        $banner = $this->layout->banners()->create(['title' => 'Campanha', 'media_type' => 'video', 'video_upload_id' => $video->id]);
+        app(HomeService::class)->flush();
+
+        $this->actingAs($this->student, 'web');
+        $this->getJson('/api/v1/home')->assertJsonPath('data.hero.0.preview.kind', 'file')->assertJsonPath('data.hero.0.preview.loop', true);
+
+        $banner->update(['media_type' => 'image']);
+        app(HomeService::class)->flush();
+        $this->getJson('/api/v1/home')->assertJsonPath('data.hero.0.preview', null);
+    }
+
     public function test_guest_cannot_read_home(): void
     {
         $this->getJson('/api/v1/home')->assertUnauthorized();

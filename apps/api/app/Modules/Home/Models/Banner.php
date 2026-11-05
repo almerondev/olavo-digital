@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['home_layout_id', 'placement', 'title', 'description', 'cta_label', 'image_upload_id', 'material_id', 'external_url', 'sort_order', 'is_active', 'starts_at', 'ends_at'])]
+#[Fillable(['home_layout_id', 'placement', 'title', 'description', 'cta_label', 'image_upload_id', 'media_type', 'video_upload_id', 'material_id', 'external_url', 'sort_order', 'is_active', 'starts_at', 'ends_at'])]
 class Banner extends Model
 {
     use HasAudience;
@@ -17,6 +17,11 @@ class Banner extends Model
     protected function casts(): array
     {
         return ['is_active' => 'boolean', 'starts_at' => 'datetime', 'ends_at' => 'datetime'];
+    }
+
+    public function video(): BelongsTo
+    {
+        return $this->belongsTo(Upload::class, 'video_upload_id');
     }
 
     public function image(): BelongsTo

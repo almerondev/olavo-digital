@@ -160,7 +160,7 @@ export interface HomeHero {
   teacher: string | null
   category: string | null
   external_url: string | null
-  preview: { kind: 'file' | 'embed'; url: string } | null
+  preview: { kind: 'file' | 'embed'; url: string; loop?: boolean } | null
 }
 
 export interface SectionPage {
@@ -223,12 +223,16 @@ export interface BuilderSection {
   group_ids: number[]
 }
 
+export type HeroMediaType = 'image' | 'preview' | 'video'
+
 export interface BuilderBanner {
   id: number
   title: string | null
   description: string | null
   cta_label: string | null
   image: Upload | null
+  media_type: HeroMediaType
+  video: Upload | null
   material: { id: number; title: string } | null
   external_url: string | null
   sort_order: number
@@ -477,6 +481,7 @@ export interface PlatformSettings {
   footer: string | null
   brand_color: string | null
   socials: Record<string, string | null>
+  android_url: string | null
   terms: string | null
   privacy: string | null
   auto_material: boolean

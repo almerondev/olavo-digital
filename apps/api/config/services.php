@@ -2,6 +2,10 @@
 
 return [
 
+    'fcm' => [
+        'credentials' => env('FCM_CREDENTIALS'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Third Party Services

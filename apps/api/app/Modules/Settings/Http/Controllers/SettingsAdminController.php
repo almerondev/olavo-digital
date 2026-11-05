@@ -3,6 +3,7 @@
 namespace App\Modules\Settings\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Modules\Communication\Services\FirebaseCredentials;
 use App\Modules\Settings\Services\SettingsService;
 use App\Modules\Uploads\Models\Upload;
 use App\Support\Audit\Audit;
@@ -14,11 +15,12 @@ class SettingsAdminController extends Controller
 {
     /** Campo da tela => [chave, pública, padrão]. */
     private const FIELDS = [
-        'name' => ['platform.name', true, 'Olavo Digital'],
+        'name' => ['platform.name', true, 'Olavo TV+'],
         'tagline' => ['platform.tagline', true, null],
         'footer' => ['platform.footer', true, null],
         'brand_color' => ['platform.brand_color', true, null],
         'socials' => ['platform.socials', true, []],
+        'android_url' => ['app.android_url', true, null],
         'terms' => ['legal.terms', true, null],
         'privacy' => ['legal.privacy', true, null],
         'auto_material' => ['notifications.auto_material', false, true],
@@ -47,6 +49,7 @@ class SettingsAdminController extends Controller
             'socials.youtube' => ['nullable', 'url:https', 'max:300'],
             'socials.facebook' => ['nullable', 'url:https', 'max:300'],
             'socials.tiktok' => ['nullable', 'url:https', 'max:300'],
+            'android_url' => ['nullable', 'string', 'max:500', 'regex:#^(/[^/\\\\]|https://)#'],
             'terms' => ['nullable', 'string', 'max:60000'],
             'privacy' => ['nullable', 'string', 'max:60000'],
             'auto_material' => ['required', 'boolean'],
@@ -106,7 +109,7 @@ class SettingsAdminController extends Controller
                 'storage' => config('olavo.uploads.driver'),
                 'mail' => config('mail.default'),
                 'queue' => config('queue.default'),
-                'push' => false,
+                'push' => FirebaseCredentials::load() !== null,
             ],
         ];
     }

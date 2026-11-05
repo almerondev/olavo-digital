@@ -37,6 +37,7 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
     footer: settings.footer ?? '',
     brand_color: settings.brand_color,
     socials: settings.socials ?? {},
+    android_url: settings.android_url ?? '',
     terms: settings.terms ?? '',
     privacy: settings.privacy ?? '',
     auto_material: settings.auto_material,
@@ -50,6 +51,7 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
     mutationFn: () => settingsApi.update({
       ...form,
       tagline: form.tagline || null,
+      android_url: form.android_url || null,
       footer: form.footer || null,
       terms: form.terms || null,
       privacy: form.privacy || null,
@@ -116,6 +118,14 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
         </div>
       </Panel>
 
+      <Panel title="Aplicativo" description="Quem entra pelo navegador vê este link na tela de login. Sem link, o aviso não aparece.">
+        <div className="grid gap-2">
+          <Label htmlFor="set-android">Link do APK para Android</Label>
+          <Input id="set-android" placeholder="/downloads/olavo-tv-plus.apk" value={form.android_url} aria-invalid={Boolean(error?.fieldError('android_url'))} onChange={(e) => setForm({ ...form, android_url: e.target.value })} />
+          {error?.fieldError('android_url') && <p className="text-sm text-destructive">Use um caminho da plataforma ou um link https.</p>}
+        </div>
+      </Panel>
+
       <Panel title="Notificações automáticas" description="Mensagens enviadas por você sempre chegam.">
         <Label className="flex items-center gap-2 font-normal"><Checkbox checked={form.auto_material} onCheckedChange={(value) => setForm({ ...form, auto_material: value === true })} />Avisar sobre novos materiais e vídeos</Label>
         <Label className="flex items-center gap-2 font-normal"><Checkbox checked={form.auto_live} onCheckedChange={(value) => setForm({ ...form, auto_live: value === true })} />Avisar quando uma transmissão começar</Label>
@@ -135,10 +145,10 @@ function SettingsForm({ settings }: { settings: PlatformSettings }) {
       <Panel title="Integrações" description="Definidas no servidor. Chaves e senhas nunca aparecem aqui.">
         <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1 text-sm">
           <dt className="text-muted-foreground">Armazenamento</dt><dd>{STORAGE_LABELS[settings.environment.storage] ?? settings.environment.storage}</dd>
-          <dt className="text-muted-foreground">Envio de e-mail</dt><dd>{settings.environment.mail === 'log' ? 'Desligado: e-mails ficam só no registro do servidor' : settings.environment.mail}</dd>
+          <dt className="text-muted-foreground">Envio de e-mail</dt><dd>{settings.environment.mail === 'log' ? 'Desligado: e-mails ficam só no registro do servidor' : 'SMTP'}</dd>
           <dt className="text-muted-foreground">Fila</dt><dd>{settings.environment.queue}</dd>
           <dt className="text-muted-foreground">Vídeos e lives</dt><dd>YouTube</dd>
-          <dt className="text-muted-foreground">Push no celular</dt><dd>Ainda não configurado</dd>
+          <dt className="text-muted-foreground">Push no celular</dt><dd>{settings.environment.push ? 'Firebase conectado' : 'Falta conectar o Firebase'}</dd>
         </dl>
       </Panel>
 

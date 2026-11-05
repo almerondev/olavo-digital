@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { CURRENT_USER_KEY, useCurrentUser } from '@/modules/auth/hooks/useCurrentUser'
+import { useLogout } from '@/modules/auth/hooks/useLogout'
 import { ApiError } from '@/services/http'
 import type { User } from '@/types/api'
 import { formatDate } from '@/utils/format'
@@ -135,6 +136,7 @@ function SessionsPanel() {
 
 export function ProfilePage() {
   const { data: user } = useCurrentUser()
+  const logout = useLogout()
 
   if (!user) return null
 
@@ -142,13 +144,19 @@ export function ProfilePage() {
     <div className="mx-auto grid max-w-2xl grid-cols-[minmax(0,1fr)] gap-4 px-4 pt-24 pb-16 sm:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">Perfil</h1>
-        {user.is_student && <Link to="/historico" className="text-sm text-brand hover:underline">Ver histórico</Link>}
+        {user.is_student && (
+          <div className="flex gap-4 text-sm text-brand">
+            <Link to="/minha-lista" className="hover:underline">Minha lista</Link>
+            <Link to="/historico" className="hover:underline">Ver histórico</Link>
+          </div>
+        )}
       </div>
       <DetailsForm key={user.id} user={user} />
       <PasswordForm />
       <SessionsPanel />
       {user.is_student && <PreferencesPanel key={`preferences-${user.id}`} user={user} />}
       <PrivacyPanel user={user} />
+      <Button variant="outline" className="md:hidden" disabled={logout.isPending} onClick={() => logout.mutate()}>Sair da conta</Button>
     </div>
   )
 }

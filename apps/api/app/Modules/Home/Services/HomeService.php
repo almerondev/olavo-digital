@@ -57,7 +57,7 @@ class HomeService
      */
     public function preview(HomeLayout $layout, ?StudentGroup $group, ?int $courseId = null): array
     {
-        $layout->load('sections.audienceTargets', 'banners.audienceTargets', 'banners.image');
+        $layout->load('sections.audienceTargets', 'banners.audienceTargets', 'banners.image', 'banners.video');
 
         return $this->build($layout, User::simulatedStudent($group ? [$group->id] : [], $courseId ? [$courseId] : []), PHP_INT_MAX);
     }
@@ -131,7 +131,7 @@ class HomeService
         $layout = HomeLayout::query()
             ->where('surface', $surface)
             ->where('status', HomeLayout::PUBLISHED)
-            ->with('sections.audienceTargets', 'banners.audienceTargets', 'banners.image')
+            ->with('sections.audienceTargets', 'banners.audienceTargets', 'banners.image', 'banners.video')
             ->latest('published_at')
             ->first();
 
@@ -151,6 +151,7 @@ class HomeService
                 'attributes' => $banner->getAttributes(),
                 'targets' => $targets($banner->audienceTargets),
                 'image' => $banner->image?->getAttributes(),
+                'video' => $banner->video?->getAttributes(),
             ])->all(),
         ];
     }
@@ -167,7 +168,9 @@ class HomeService
         $banners = collect($snapshot['banners'])->map(function (array $row) use ($rebuild) {
             $image = $row['image'] ? (new Upload)->newFromBuilder($row['image']) : null;
 
-            return $rebuild(Banner::class, $row)->setRelation('image', $image);
+            $video = $row['video'] ? (new Upload)->newFromBuilder($row['video']) : null;
+
+            return $rebuild(Banner::class, $row)->setRelation('image', $image)->setRelation('video', $video);
         });
 
         return (new HomeLayout)->newFromBuilder($snapshot['layout'])
@@ -300,7 +303,7 @@ class HomeService
             'teacher' => $material?->teacher?->display_name,
             'category' => $material?->categories->firstWhere('pivot.is_primary', true)?->name,
             'external_url' => $banner?->external_url,
-            'preview' => $material ? $this->previews->for($material) : null,
+            'preview' => $banner ? $this->previews->forBanner($banner, $material) : $this->previews->for($material),
             'is_live' => false,
         ];
     }

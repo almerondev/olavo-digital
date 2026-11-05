@@ -4,7 +4,7 @@ namespace App\Modules\Communication\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Communication\Models\NotificationRecipient;
-use App\Modules\Communication\Models\PushSubscription;
+use App\Modules\Communication\Models\PushDevice;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -55,27 +55,27 @@ class NotificationController extends Controller
         return response()->noContent();
     }
 
-    public function subscribePush(Request $request): Response
+    /** O aparelho pertence a quem entrou por último nele. */
+    public function registerDevice(Request $request): Response
     {
         $data = $request->validate([
-            'endpoint' => ['required', 'url:https', 'max:1000'],
-            'public_key' => ['required', 'string', 'max:255'],
-            'auth_token' => ['required', 'string', 'max:255'],
+            'token' => ['required', 'string', 'max:4096'],
+            'platform' => ['required', 'in:android,ios'],
         ]);
 
-        PushSubscription::updateOrCreate(
-            ['endpoint_hash' => hash('sha256', $data['endpoint'])],
-            [...$data, 'user_id' => $request->user()->id, 'user_agent' => substr((string) $request->userAgent(), 0, 255)],
+        PushDevice::updateOrCreate(
+            ['token_hash' => PushDevice::hash($data['token'])],
+            [...$data, 'user_id' => $request->user()->id],
         );
 
         return response()->noContent();
     }
 
-    public function unsubscribePush(Request $request): Response
+    public function removeDevice(Request $request): Response
     {
-        $data = $request->validate(['endpoint' => ['required', 'string', 'max:1000']]);
+        $data = $request->validate(['token' => ['required', 'string', 'max:4096']]);
 
-        PushSubscription::where('user_id', $request->user()->id)->where('endpoint_hash', hash('sha256', $data['endpoint']))->delete();
+        PushDevice::where('user_id', $request->user()->id)->where('token_hash', PushDevice::hash($data['token']))->delete();
 
         return response()->noContent();
     }

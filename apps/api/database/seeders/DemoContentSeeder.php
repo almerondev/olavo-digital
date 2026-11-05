@@ -263,7 +263,7 @@ class DemoContentSeeder extends Seeder
     {
         return [
             $description,
-            "Este arquivo faz parte dos dados de demonstração do Olavo Digital e foi gerado automaticamente. O conteúdo definitivo de \"{$title}\" será publicado pela equipe de professores.",
+            "Este arquivo faz parte dos dados de demonstração do Olavo TV+ e foi gerado automaticamente. O conteúdo definitivo de \"{$title}\" será publicado pela equipe de professores.",
             'Use este material para conferir o leitor integrado: a navegação entre páginas, o zoom e o carregamento sob demanda.',
             'Na plataforma final, cada professor publica os próprios arquivos pelo painel, e os materiais passam pelas mesmas regras de acesso aplicadas aqui.',
         ];

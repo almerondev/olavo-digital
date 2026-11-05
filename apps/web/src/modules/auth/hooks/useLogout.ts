@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router'
+import { stopPush } from '@/modules/native/push'
 import { authApi } from '../api/auth'
 
 export function useLogout() {
@@ -7,7 +8,10 @@ export function useLogout() {
   const navigate = useNavigate()
 
   return useMutation({
-    mutationFn: authApi.logout,
+    mutationFn: async () => {
+      await stopPush()
+      await authApi.logout()
+    },
     onSettled: () => {
       queryClient.clear()
       navigate('/entrar', { replace: true })

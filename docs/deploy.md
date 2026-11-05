@@ -72,8 +72,26 @@ cd ../web && npm ci && npm run build
 - [ ] Termos e política de privacidade revisados pelo jurídico e publicados em Configurações.
 - [ ] Antivírus de uploads avaliado (ainda não integrado).
 
+## App Android e push
+
+O app abre o site publicado, então precisa do endereço final com HTTPS.
+
+1. No Android Studio, conclua a instalação padrão do SDK.
+2. No console do Firebase, crie um projeto e um app Android com o pacote `br.com.olavo.tvplus`.
+3. Copie `google-services.json` para `apps/web/android/app/`.
+4. Em Contas de serviço, gere uma chave privada e salve em `apps/api/storage/app/private/firebase.json`.
+5. No `.env` do servidor, defina `FCM_CREDENTIALS=storage/app/private/firebase.json`.
+6. Gere o APK:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scriptsuild-apk.ps1 -Url https://plataforma.exemplo.com.br
+```
+
+O arquivo fica em `apps/web/public/downloads/olavo-tv-plus.apk`, e a tela de login oferece esse download. Guarde uma cópia de `olavo-tv-plus.keystore` e `keystore.properties`: sem elas, novas versões não instalam por cima da atual.
+
+Para trocar o endereço do app, gere um novo APK. Atualizações do site chegam ao app sem novo APK.
+
 ## Ainda depende de decisão
 
-- **Push no celular:** a estrutura existe, mas falta gerar as chaves VAPID, escolher o serviço e criar o service worker.
 - **Vídeos enviados por upload:** hoje os arquivos são servidos diretamente. Para muitos alunos simultâneos, use YouTube não listado ou contrate um provedor de vídeo.
 - **Prévia de Word e PowerPoint:** a conversão com LibreOffice não está instalada. O aluno baixa o arquivo.

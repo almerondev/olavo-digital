@@ -1,4 +1,4 @@
-# Olavo Digital
+# Olavo TV+
 
 Plataforma educacional do Olavo Pré-Vestibular.
 

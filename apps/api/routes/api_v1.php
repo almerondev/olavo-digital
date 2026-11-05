@@ -94,8 +94,8 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
             Route::post('read-all', 'readAll');
             Route::post('{notification}/read', 'read')->whereNumber('notification');
         });
-        Route::post('me/push-subscriptions', [NotificationController::class, 'subscribePush']);
-        Route::delete('me/push-subscriptions', [NotificationController::class, 'unsubscribePush']);
+        Route::post('me/push-devices', [NotificationController::class, 'registerDevice']);
+        Route::delete('me/push-devices', [NotificationController::class, 'removeDevice']);
 
         Route::get('me/favorites', [FavoriteController::class, 'index']);
         Route::put('me/favorites/{slug}', [FavoriteController::class, 'store']);

@@ -16,6 +16,8 @@ class BannerResource extends JsonResource
             'description' => $this->description,
             'cta_label' => $this->cta_label,
             'image' => $this->image ? new UploadResource($this->image) : null,
+            'media_type' => $this->media_type,
+            'video' => $this->video ? new UploadResource($this->video) : null,
             'material' => $this->material ? ['id' => $this->material->id, 'title' => $this->material->title] : null,
             'external_url' => $this->external_url,
             'sort_order' => $this->sort_order,

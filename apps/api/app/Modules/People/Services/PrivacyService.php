@@ -8,7 +8,7 @@ use App\Modules\Auth\Models\User;
 use App\Modules\Auth\Services\SessionManager;
 use App\Modules\Communication\Models\AnnouncementRead;
 use App\Modules\Communication\Models\NotificationRecipient;
-use App\Modules\Communication\Models\PushSubscription;
+use App\Modules\Communication\Models\PushDevice;
 use App\Modules\Uploads\Models\Upload;
 use App\Support\Audit\ActivityLog;
 use App\Support\Audit\Audit;
@@ -93,7 +93,7 @@ class PrivacyService
             DB::table('watch_progress')->where('student_id', $student->id)->delete();
             DB::table('audience_targets')->where('student_id', $student->id)->delete();
             NotificationRecipient::where('user_id', $user->id)->delete();
-            PushSubscription::where('user_id', $user->id)->delete();
+            PushDevice::where('user_id', $user->id)->delete();
             ActivityLog::where('actor_id', $user->id)->update(['ip_address' => null, 'user_agent' => null]);
 
             $student->delete();

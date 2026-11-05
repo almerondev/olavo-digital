@@ -25,6 +25,7 @@ export function PanelLayout({ title, items }: { title: string; items: PanelNavIt
             <Wordmark className="h-11" />
           </Link>
           <p className="text-xs text-muted-foreground md:mt-1">{title}</p>
+          <div className="md:hidden">{user && <UserMenu user={user} />}</div>
         </div>
         <nav aria-label={title} className="flex gap-1 overflow-x-auto px-2 pb-2 text-sm md:flex-col md:pb-0">
           {visible.map((item) => (
