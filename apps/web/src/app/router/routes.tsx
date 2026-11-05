@@ -1,4 +1,4 @@
-import { BookOpen, CircleUser, FolderTree, GraduationCap, House, LayoutTemplate, Library, Radio, ShieldCheck } from 'lucide-react'
+import { Bell, BookOpen, CircleUser, FolderTree, GraduationCap, House, LayoutTemplate, Library, Megaphone, Radio, ShieldCheck } from 'lucide-react'
 import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import { PanelLayout, type PanelNavItem } from '@/app/layouts/PanelLayout'
 import { StudentLayout } from '@/app/layouts/StudentLayout'
@@ -8,6 +8,8 @@ const ADMIN_NAV: PanelNavItem[] = [
   { to: '/admin/materiais', label: 'Materiais', icon: Library, permission: 'materials.manage_all' },
   { to: '/admin/home', label: 'Construtor da home', icon: LayoutTemplate, permission: 'home.manage' },
   { to: '/admin/ao-vivo', label: 'Ao vivo agora', icon: Radio, permission: 'live.manage' },
+  { to: '/admin/avisos', label: 'Avisos', icon: Megaphone, permission: 'announcements.manage' },
+  { to: '/admin/notificacoes', label: 'Notificações', icon: Bell, permission: 'notifications.send' },
   { to: '/admin/cursos', label: 'Cursos', icon: BookOpen, permission: 'categories.manage' },
   { to: '/admin/professores', label: 'Professores', icon: GraduationCap, permission: 'teachers.manage' },
   { to: '/admin/categorias', label: 'Categorias', icon: FolderTree, permission: 'categories.manage' },
@@ -84,6 +86,9 @@ export const router = createBrowserRouter([
               { path: 'historico', lazy: async () => ({ Component: (await import('@/modules/history/pages/HistoryPage')).HistoryPage }) },
               { path: 'perfil', lazy: async () => ({ Component: (await import('@/modules/profile/pages/ProfilePage')).ProfilePage }) },
               { path: 'ao-vivo', lazy: async () => ({ Component: (await import('@/modules/olavo-tv/pages/OlavoTvPage')).OlavoTvPage }) },
+              { path: 'pesquisa', lazy: async () => ({ Component: (await import('@/modules/communication/pages/SearchPage')).SearchPage }) },
+              { path: 'notificacoes', lazy: async () => ({ Component: (await import('@/modules/communication/pages/NotificationsPage')).NotificationsPage }) },
+              { path: 'avisos', lazy: async () => ({ Component: (await import('@/modules/communication/pages/AnnouncementsPage')).AnnouncementsPage }) },
               { path: 'elenco', lazy: async () => ({ Component: (await import('@/modules/cast/pages/CastPage')).CastPage }) },
               { path: 'elenco/:slug', lazy: async () => ({ Component: (await import('@/modules/cast/pages/TeacherProfilePage')).TeacherProfilePage }) },
               { path: 'explorar', lazy: async () => ({ Component: (await import('@/modules/catalog/pages/ExplorePage')).ExplorePage }) },
@@ -133,6 +138,8 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="categories.manage" />,
                     children: [
+                      { path: 'avisos', lazy: async () => ({ Component: (await import('@/modules/communication/pages/AdminAnnouncementsPage')).AdminAnnouncementsPage }) },
+                      { path: 'notificacoes', lazy: async () => ({ Component: (await import('@/modules/communication/pages/AdminNotificationsPage')).AdminNotificationsPage }) },
                       { path: 'cursos', lazy: async () => ({ Component: (await import('@/modules/categories/pages/CoursesPage')).CoursesPage }) },
                       { path: 'categorias', lazy: async () => ({ Component: (await import('@/modules/categories/pages/CategoriesPage')).CategoriesPage }) },
                     ],

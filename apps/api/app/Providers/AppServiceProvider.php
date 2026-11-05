@@ -15,11 +15,19 @@ use App\Modules\Materials\Models\Material;
 use App\Modules\Materials\Policies\MaterialPolicy;
 use App\Modules\Playback\Services\StudentLibrary;
 use App\Modules\Uploads\Http\Controllers\UploadController;
+use App\Modules\Communication\Contracts\PushSender;
+use App\Modules\Communication\Listeners\NotifyAboutContent;
+use App\Modules\Communication\Models\Announcement;
+use App\Modules\Communication\Services\NullPushSender;
+use App\Modules\LiveTv\Events\LiveStreamStarted;
+use App\Modules\LiveTv\Models\LiveStream;
+use App\Modules\Materials\Events\MaterialPublished;
 use App\Modules\Uploads\Services\LocalUploadStorage;
 use App\Modules\Uploads\Services\S3UploadStorage;
 use App\Modules\Uploads\Services\UploadStorage;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -28,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(PermissionResolver::class);
+        $this->app->bind(PushSender::class, NullPushSender::class);
         $this->app->scoped(StudentLibrary::class);
         $this->app->bind(UploadStorage::class, fn () => config('olavo.uploads.driver') === 's3'
             ? new S3UploadStorage
@@ -44,7 +53,12 @@ class AppServiceProvider extends ServiceProvider
             'home_section' => HomeSection::class,
             'banner' => Banner::class,
             'live_schedule' => LiveSchedule::class,
+            'live_stream' => LiveStream::class,
+            'announcement' => Announcement::class,
         ]);
+
+        Event::listen(MaterialPublished::class, [NotifyAboutContent::class, 'materialPublished']);
+        Event::listen(LiveStreamStarted::class, [NotifyAboutContent::class, 'liveStarted']);
 
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Material::class, MaterialPolicy::class);

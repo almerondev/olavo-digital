@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ContentRow } from '@/components/netflix/ContentRow'
 import { HeroBanner } from '@/components/netflix/HeroBanner'
 import { catalogApi, type Surface } from '@/modules/catalog/api/catalog'
+import { AnnouncementsArea } from '@/modules/communication/components/AnnouncementsArea'
 import { useCurrentUser } from '@/modules/auth/hooks/useCurrentUser'
 import type { HomeData } from '@/types/api'
 
@@ -10,6 +11,7 @@ export function SurfaceContent({ data, cacheScope }: { data: HomeData; cacheScop
     <>
       {data.hero[0] ? <HeroBanner hero={data.hero[0]} /> : <div className="h-20" />}
       <div className="relative z-10 grid gap-8 pb-16 sm:-mt-10">
+        <AnnouncementsArea items={data.announcements ?? []} readOnly={Boolean(cacheScope)} />
         {data.sections.map((section) => <ContentRow key={section.id} section={section} cacheScope={cacheScope} />)}
       </div>
     </>
@@ -30,7 +32,7 @@ function SurfacePage({ surface }: { surface: Surface }) {
     )
   }
 
-  if (home.data.hero.length === 0 && home.data.sections.length === 0) {
+  if (home.data.hero.length === 0 && home.data.sections.length === 0 && !home.data.announcements?.length) {
     return (
       <section className="flex min-h-[70dvh] items-end px-4 pt-24 pb-16 sm:px-8 lg:px-12">
         <div className="max-w-2xl">

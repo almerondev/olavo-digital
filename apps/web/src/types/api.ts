@@ -175,6 +175,7 @@ export interface HomeSection extends Partial<SectionPage> {
 
 export interface HomeData {
   hero: HomeHero[]
+  announcements: Announcement[]
   sections: HomeSection[]
 }
 
@@ -340,4 +341,65 @@ export interface Course {
   is_active: boolean
   categories_count: number
   students_count: number
+}
+
+export type DisplayMode = 'banner' | 'card' | 'section'
+
+export interface Announcement {
+  id: number
+  title: string
+  body: string
+  image_urls: Record<string, string>
+  display_mode: DisplayMode
+  priority: number
+  is_pinned: boolean
+  requires_ack: boolean
+  read_at: string | null
+  published_at: string
+}
+
+export interface AdminAnnouncement {
+  id: number
+  title: string
+  body: string
+  image: Upload | null
+  display_mode: DisplayMode
+  priority: number
+  course: { id: number; name: string } | null
+  published_at: string
+  expires_at: string | null
+  is_pinned: boolean
+  requires_ack: boolean
+  send_notification: boolean
+  notified_at: string | null
+  reads_count: number
+  group_ids: number[]
+}
+
+export interface AppNotification {
+  id: number
+  type: string
+  title: string
+  body: string
+  url: string | null
+  image_urls: Record<string, string>
+  read_at: string | null
+  created_at: string
+}
+
+export interface SentNotification {
+  id: number
+  type: string
+  title: string
+  body: string
+  sender: string | null
+  recipients_count: number
+  read_count: number
+  created_at: string
+}
+
+export interface SearchResult {
+  total: number
+  groups: { key: string; label: string; items: CardMaterial[] }[]
+  teachers: TeacherCard[]
 }

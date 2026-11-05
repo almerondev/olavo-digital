@@ -12,6 +12,10 @@ use App\Modules\Cast\Http\Controllers\TeacherPanelController;
 use App\Modules\Catalog\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Http\Controllers\CategoryTypeController;
 use App\Modules\Catalog\Http\Controllers\CourseController;
+use App\Modules\Communication\Http\Controllers\AnnouncementAdminController;
+use App\Modules\Communication\Http\Controllers\AnnouncementController;
+use App\Modules\Communication\Http\Controllers\NotificationAdminController;
+use App\Modules\Communication\Http\Controllers\NotificationController;
 use App\Modules\Home\Http\Controllers\HomeBuilderController;
 use App\Modules\Home\Http\Controllers\HomeController;
 use App\Modules\LiveTv\Http\Controllers\LiveAdminController;
@@ -19,6 +23,7 @@ use App\Modules\LiveTv\Http\Controllers\TvController;
 use App\Modules\Materials\Http\Controllers\CatalogController;
 use App\Modules\Materials\Http\Controllers\MaterialController;
 use App\Modules\Materials\Http\Controllers\OptionsController;
+use App\Modules\Materials\Http\Controllers\SearchController;
 use App\Modules\Playback\Http\Controllers\FavoriteController;
 use App\Modules\Playback\Http\Controllers\HistoryController;
 use App\Modules\Playback\Http\Controllers\PlaybackController;
@@ -67,6 +72,20 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::post('materials/{slug}/complete', [PlaybackController::class, 'complete']);
         Route::post('materials/{slug}/access', [PlaybackController::class, 'access']);
 
+        Route::get('search', SearchController::class)->middleware('throttle:60,1');
+
+        Route::get('announcements', [AnnouncementController::class, 'index']);
+        Route::post('announcements/{announcement}/read', [AnnouncementController::class, 'read'])->whereNumber('announcement');
+
+        Route::prefix('me/notifications')->controller(NotificationController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('unread-count', 'unreadCount');
+            Route::post('read-all', 'readAll');
+            Route::post('{notification}/read', 'read')->whereNumber('notification');
+        });
+        Route::post('me/push-subscriptions', [NotificationController::class, 'subscribePush']);
+        Route::delete('me/push-subscriptions', [NotificationController::class, 'unsubscribePush']);
+
         Route::get('me/favorites', [FavoriteController::class, 'index']);
         Route::put('me/favorites/{slug}', [FavoriteController::class, 'store']);
         Route::delete('me/favorites/{slug}', [FavoriteController::class, 'destroy']);
@@ -100,6 +119,17 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     });
 
     Route::prefix('admin')->middleware('can:panel.admin')->group(function () {
+        Route::middleware('can:announcements.manage')->group(function () {
+            Route::get('announcements/{announcement}/reads', [AnnouncementAdminController::class, 'reads']);
+            Route::apiResource('announcements', AnnouncementAdminController::class)->except('show');
+        });
+
+        Route::prefix('notifications')->middleware('can:notifications.send')->controller(NotificationAdminController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::post('/', 'store')->middleware('throttle:30,1');
+            Route::get('recipients', 'recipients');
+        });
+
         Route::prefix('live')->middleware('can:live.manage')->controller(LiveAdminController::class)->group(function () {
             Route::get('settings', 'settings');
             Route::put('settings', 'updateSettings');

@@ -11,6 +11,7 @@ use App\Modules\Materials\Http\Resources\MaterialDetailResource;
 use App\Modules\Materials\Models\Material;
 use App\Modules\Materials\Models\MaterialFile;
 use App\Modules\Materials\Services\MaterialAccessService;
+use App\Modules\Materials\Services\MaterialSearch;
 use App\Modules\Uploads\Services\UploadStorage;
 use App\Support\Http\ApiException;
 use Illuminate\Database\Eloquent\Builder;
@@ -51,14 +52,10 @@ class CatalogController extends Controller
             ->when($filters['type'] ?? null, fn (Builder $q, $type) => $q->where('type', $type))
             ->when($filters['from'] ?? null, fn (Builder $q, $date) => $q->whereDate('published_at', '>=', $date))
             ->when($filters['to'] ?? null, fn (Builder $q, $date) => $q->whereDate('published_at', '<=', $date))
-            ->when($filters['q'] ?? null, fn (Builder $q, $term) => $q->where(fn (Builder $match) => $match
-                ->where('title', 'like', "%{$term}%")
-                ->orWhere('description', 'like', "%{$term}%")
-                ->orWhereHas('tags', fn (Builder $tags) => $tags->where('name', 'like', "%{$term}%"))));
+            ->when($filters['q'] ?? null, fn (Builder $q, $term) => MaterialSearch::apply($q, $term));
 
-        // Relevância provisória até a pesquisa global: título que contém o termo, depois destaques.
         if (($filters['sort'] ?? 'recent') === 'relevance') {
-            $query->when($filters['q'] ?? null, fn (Builder $q, $term) => $q->orderByRaw('title like ? desc', ["%{$term}%"]))
+            $query->when($filters['q'] ?? null, fn (Builder $q, $term) => $q->orderByRaw('title like ? desc', [MaterialSearch::pattern($term)]))
                 ->orderByDesc('is_featured');
         }
 

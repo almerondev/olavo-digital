@@ -47,7 +47,7 @@ class DemoSeeder extends Seeder
         $esa = Student::firstOrCreate(['user_id' => $esaUser->id], ['enrollment_code' => 'OLV-0002']);
         $esa->courses()->syncWithoutDetaching([Course::where('slug', 'preparatorio-esa')->value('id')]);
 
-        $this->call([DemoContentSeeder::class, LiveDemoSeeder::class]);
+        $this->call([DemoContentSeeder::class, LiveDemoSeeder::class, CommunicationDemoSeeder::class]);
     }
 
     private function user(string $name, string $email, string $password): User

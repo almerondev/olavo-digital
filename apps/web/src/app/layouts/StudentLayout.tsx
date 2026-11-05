@@ -1,9 +1,11 @@
+import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router'
+import { Link, NavLink, Outlet, useLocation } from 'react-router'
 import { UserMenu } from '@/components/navigation/UserMenu'
 import { Wordmark } from '@/components/navigation/Wordmark'
 import { cn } from '@/lib/utils'
 import { useCurrentUser } from '@/modules/auth/hooks/useCurrentUser'
+import { NotificationBell } from '@/modules/communication/components/NotificationBell'
 
 const NAV_ITEMS = [
   { to: '/', label: 'Início' },
@@ -52,7 +54,11 @@ export function StudentLayout() {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto shrink-0">{user && <UserMenu user={user} />}</div>
+          <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+            <Link to="/pesquisa" aria-label="Pesquisar" className="rounded p-1 opacity-70 transition hover:opacity-100"><Search className="size-4" /></Link>
+            {user?.is_student && <NotificationBell />}
+            {user && <UserMenu user={user} />}
+          </div>
         </div>
       </header>
       <Outlet />

@@ -6,6 +6,7 @@ use App\Modules\Access\Models\AudienceTarget;
 use App\Modules\Access\Models\StudentGroup;
 use App\Modules\Auth\Models\User;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Communication\Services\AnnouncementBoard;
 use App\Modules\Home\Models\Banner;
 use App\Modules\Home\Models\HomeLayout;
 use App\Modules\Home\Models\HomeSection;
@@ -32,6 +33,7 @@ class HomeService
         private MaterialAccessService $access,
         private HeroPreview $previews,
         private LiveDirectory $live,
+        private AnnouncementBoard $announcements,
     ) {
     }
 
@@ -41,7 +43,7 @@ class HomeService
         $layout = $this->published($surface);
 
         if (! $layout) {
-            return ['hero' => [], 'sections' => []];
+            return ['hero' => [], 'announcements' => [], 'sections' => []];
         }
 
         return $this->build($layout, $user, self::EAGER_SECTIONS);
@@ -77,6 +79,7 @@ class HomeService
 
         return [
             'hero' => $this->heroes($layout, $user, $studentId, $groupIds),
+            'announcements' => $layout->surface === HomeLayout::SURFACE_HOME ? $this->announcements->forHome($user) : [],
             'sections' => $sections
                 ->map(fn (HomeSection $section, int $position) => $this->presentSection($section, $user, $layout->surface, $position < $eagerSections))
                 ->filter(fn (array $section) => ! isset($section['items']) || $section['items'] !== [])
