@@ -5,6 +5,7 @@ Plataforma educacional do Olavo Pré-Vestibular.
 - `apps/api`: API Laravel 13 (PHP 8.3+, MySQL 8.4, Sanctum).
 - `apps/web`: SPA React 19 (Vite, Tailwind, shadcn/ui, TanStack Query).
 - `docs/arquitetura.html`: arquitetura aprovada.
+- `docs/deploy.md`: como colocar em produção.
 
 ## Ambiente local (Windows, sem Docker)
 
@@ -22,7 +23,8 @@ Dados de demonstração, com senha definida em `SEED_DEMO_PASSWORD` no `apps/api
 | --- | --- |
 | Administrador | admin@olavo.test |
 | Professor | professora@olavo.test |
-| Aluno | aluno@olavo.test |
+| Aluno do ENEM | aluno@olavo.test |
+| Aluno da ESA | aluno.esa@olavo.test |
 
 ## Comandos
 
@@ -36,6 +38,6 @@ npm run build                      # em apps/web: checagem de tipos e build
 
 - Uploads usam disco local em desenvolvimento (`UPLOADS_DRIVER=local`) e R2 em produção (`s3`). O fluxo da API é o mesmo. O driver `s3` ainda não foi testado contra um bucket real.
 - Sem o processo `queue:work`, os arquivos enviados ficam parados em "Validando". Sem `schedule:work`, os agendamentos não publicam. `scriptsdev.ps1` inicia os dois.
-- Filas, cache e sessões usam MySQL em desenvolvimento. Em produção, filas e cache vão para Redis.
+- Filas, cache e sessões usam MySQL em desenvolvimento. Em produção também, até o volume justificar Redis.
 - Sessões ficam no MySQL também em produção, pois a tela de sessões ativas consulta essa tabela.
 - O Laravel 13 aceita escritas sem token CSRF quando o navegador envia `Sec-Fetch-Site: same-origin`. Pedidos de outros sites continuam recusados com 419.

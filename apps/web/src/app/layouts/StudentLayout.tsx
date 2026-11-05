@@ -1,6 +1,7 @@
 import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router'
+import { SiteFooter } from '@/components/navigation/SiteFooter'
 import { UserMenu } from '@/components/navigation/UserMenu'
 import { Wordmark } from '@/components/navigation/Wordmark'
 import { cn } from '@/lib/utils'
@@ -62,6 +63,7 @@ export function StudentLayout() {
         </div>
       </header>
       <Outlet />
+      <SiteFooter />
     </div>
   )
 }

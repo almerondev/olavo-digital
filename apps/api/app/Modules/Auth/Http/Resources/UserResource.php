@@ -20,6 +20,8 @@ class UserResource extends JsonResource
             'is_student' => $this->student !== null,
             'preferences' => $this->preferences ?? (object) [],
             'last_login_at' => $this->last_login_at?->toIso8601String(),
+            'terms_pending' => $this->termsPending(),
+            'deletion_requested_at' => $this->deletion_requested_at?->toIso8601String(),
             'roles' => $this->roles->pluck('slug'),
             'permissions' => app(PermissionResolver::class)->for($this->resource),
         ];

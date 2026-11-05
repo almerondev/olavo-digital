@@ -28,13 +28,17 @@ class NotificationAudience
      * @param  array{mode: string, ids?: list<int>}  $audience
      * @param  Closure(list<int>): void  $handle
      */
-    public function eachChunk(array $audience, Closure $handle): void
+    public function eachChunk(array $audience, string $type, Closure $handle): void
     {
         $ids = $audience['ids'] ?? [];
         $reaches = $this->reachFor($audience['mode'], $ids);
 
-        $this->query($audience['mode'], $ids)->chunkById(self::CHUNK, function (Collection $users) use ($reaches, $handle) {
-            $userIds = $users->filter($reaches)->modelKeys();
+        $this->query($audience['mode'], $ids)->chunkById(self::CHUNK, function (Collection $users) use ($reaches, $type, $handle) {
+            // Mensagem enviada pela equipe sempre chega; só as automáticas podem ser silenciadas.
+            $userIds = $users
+                ->reject(fn (User $user) => in_array($type, $user->preferences['muted_notifications'] ?? [], true))
+                ->filter($reaches)
+                ->modelKeys();
 
             if ($userIds !== []) {
                 $handle($userIds);

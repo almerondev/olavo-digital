@@ -10,6 +10,7 @@ import { ApiError } from '@/services/http'
 import type { User } from '@/types/api'
 import { formatDate } from '@/utils/format'
 import { profileApi } from '../api'
+import { PreferencesPanel, PrivacyPanel } from '../components/PrivacyPanels'
 
 const panel = 'grid grid-cols-[minmax(0,1fr)] gap-4 rounded-xl bg-card p-5'
 
@@ -146,6 +147,8 @@ export function ProfilePage() {
       <DetailsForm key={user.id} user={user} />
       <PasswordForm />
       <SessionsPanel />
+      {user.is_student && <PreferencesPanel key={`preferences-${user.id}`} user={user} />}
+      <PrivacyPanel user={user} />
     </div>
   )
 }

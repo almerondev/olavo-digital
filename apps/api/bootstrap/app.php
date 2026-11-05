@@ -2,6 +2,7 @@
 
 use App\Modules\Auth\Http\Middleware\EnsureUserIsActive;
 use App\Support\Http\ApiErrorRenderer;
+use App\Support\Http\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([__DIR__.'/../app/Modules/Materials/Console', __DIR__.'/../app/Modules/Uploads/Console'])
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(SecurityHeaders::class);
         $middleware->statefulApi();
         $middleware->alias(['active' => EnsureUserIsActive::class]);
     })

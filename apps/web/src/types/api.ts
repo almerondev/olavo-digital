@@ -6,6 +6,8 @@ export interface User {
   status: 'active' | 'pending' | 'blocked'
   avatar_urls: Record<string, string>
   is_student: boolean
+  terms_pending: boolean
+  deletion_requested_at: string | null
   preferences: Record<string, unknown>
   last_login_at: string | null
   roles: string[]
@@ -402,4 +404,85 @@ export interface SearchResult {
   total: number
   groups: { key: string; label: string; items: CardMaterial[] }[]
   teachers: TeacherCard[]
+}
+
+export interface StudentSummary {
+  id: number
+  user_id: number
+  name: string
+  email: string
+  phone: string | null
+  status: 'active' | 'pending' | 'blocked'
+  enrollment_code: string | null
+  courses: string[]
+  groups: string[]
+  created_at: string
+  last_login_at: string | null
+  deletion_requested_at: string | null
+}
+
+export interface StudentDetail extends StudentSummary {
+  birth_date: string | null
+  guardian_name: string | null
+  guardian_contact: string | null
+  course_ids: number[]
+  group_ids: number[]
+  terms_accepted_at: string | null
+  stats: { accesses: number; completed: number; favorites: number }
+  history: { id: number; title: string; slug: string; started_at: string; seconds_watched: number }[]
+}
+
+export interface StudentGroupItem {
+  id: number
+  name: string
+  slug: string
+  kind: 'turma' | 'grupo'
+  year: number | null
+  is_active: boolean
+  students_count: number
+}
+
+export interface DashboardData {
+  totals: {
+    students: number
+    active_students: number
+    recent_students: number
+    teachers: number
+    published_materials: number
+    videos: number
+    views: number
+    live_streams: number
+  }
+  views_by_day: { day: string; views: number }[]
+  students_by_course: { name: string; students: number }[]
+  recent_students: { id: number; name: string; last_login_at: string }[]
+  top_materials: { id: number; title: string; views: number }[]
+  latest_materials: { id: number; title: string; teacher: string | null; published_at: string | null }[]
+  recent_activity: { id: number; action: string; actor: string | null; created_at: string }[]
+}
+
+export interface AuditEntry {
+  id: number
+  action: string
+  actor: string | null
+  subject: string | null
+  changes: Record<string, unknown> | null
+  ip_address: string | null
+  created_at: string
+}
+
+export interface PlatformSettings {
+  name: string
+  tagline: string | null
+  footer: string | null
+  brand_color: string | null
+  socials: Record<string, string | null>
+  terms: string | null
+  privacy: string | null
+  auto_material: boolean
+  auto_live: boolean
+  logo_upload_id: number | null
+  logo_urls: Record<string, string>
+  legal_version: string | null
+  environment: { storage: string; mail: string; queue: string; push: boolean }
 }

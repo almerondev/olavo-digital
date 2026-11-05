@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { RouterProvider } from 'react-router'
 import { router } from '@/app/router/routes'
+import { ConfigEffects } from '@/modules/settings/config'
 import { ApiError } from '@/services/http'
 
 const queryClient = new QueryClient({
@@ -28,6 +29,7 @@ export function AppProviders() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ConfigEffects />
       <RouterProvider router={router} />
     </QueryClientProvider>
   )

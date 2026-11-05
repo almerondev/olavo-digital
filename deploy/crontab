@@ -1,0 +1,2 @@
+# crontab -u www-data deploy/crontab
+* * * * * cd /var/www/olavo-digital/apps/api && php artisan schedule:run >> /dev/null 2>&1

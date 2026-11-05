@@ -27,7 +27,13 @@ use App\Modules\Materials\Http\Controllers\SearchController;
 use App\Modules\Playback\Http\Controllers\FavoriteController;
 use App\Modules\Playback\Http\Controllers\HistoryController;
 use App\Modules\Playback\Http\Controllers\PlaybackController;
+use App\Modules\People\Http\Controllers\GroupAdminController;
+use App\Modules\People\Http\Controllers\PrivacyController;
+use App\Modules\People\Http\Controllers\StudentAdminController;
+use App\Modules\Reports\Http\Controllers\AuditController;
+use App\Modules\Reports\Http\Controllers\DashboardController;
 use App\Modules\Settings\Http\Controllers\PublicConfigController;
+use App\Modules\Settings\Http\Controllers\SettingsAdminController;
 use App\Modules\Uploads\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +49,11 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('auth/logout', [LoginController::class, 'destroy']);
+
+    Route::post('me/terms/accept', [PrivacyController::class, 'acceptTerms']);
+    Route::get('me/export', [PrivacyController::class, 'export'])->middleware('throttle:5,1');
+    Route::post('me/deletion-request', [PrivacyController::class, 'requestDeletion']);
+    Route::delete('me/deletion-request', [PrivacyController::class, 'cancelDeletion']);
 
     Route::prefix('me')->group(function () {
         Route::get('/', [MeController::class, 'show']);
@@ -119,6 +130,26 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     });
 
     Route::prefix('admin')->middleware('can:panel.admin')->group(function () {
+        Route::get('dashboard', DashboardController::class)->middleware('can:analytics.view_all');
+        Route::get('audit', AuditController::class)->middleware('can:audit.view');
+
+        Route::middleware('can:settings.manage')->group(function () {
+            Route::get('settings', [SettingsAdminController::class, 'show']);
+            Route::put('settings', [SettingsAdminController::class, 'update']);
+        });
+
+        Route::middleware('can:students.manage')->group(function () {
+            Route::prefix('students/{student}')->controller(StudentAdminController::class)->group(function () {
+                Route::post('block', 'block');
+                Route::post('unblock', 'unblock');
+                Route::post('reset-password', 'resetPassword')->middleware('throttle:10,1');
+                Route::get('export', 'export');
+                Route::post('anonymize', 'anonymize');
+            });
+            Route::apiResource('students', StudentAdminController::class)->except('destroy');
+            Route::apiResource('groups', GroupAdminController::class)->except('show');
+        });
+
         Route::middleware('can:announcements.manage')->group(function () {
             Route::get('announcements/{announcement}/reads', [AnnouncementAdminController::class, 'reads']);
             Route::apiResource('announcements', AnnouncementAdminController::class)->except('show');

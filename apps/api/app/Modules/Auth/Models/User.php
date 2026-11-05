@@ -7,6 +7,7 @@ use App\Modules\Access\Models\Role;
 use App\Modules\Access\Models\Student;
 use App\Modules\Auth\Enums\UserStatus;
 use App\Modules\Cast\Models\Teacher;
+use App\Modules\Settings\Services\SettingsService;
 use App\Modules\Uploads\Models\Upload;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -44,6 +45,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
+            'deletion_requested_at' => 'datetime',
             'password' => 'hashed',
             'preferences' => 'array',
             'status' => UserStatus::class,
@@ -95,6 +98,13 @@ class User extends Authenticatable
     public function audienceCourseIds(): Collection
     {
         return $this->simulatedCourses ?? $this->student?->courses()->pluck('courses.id') ?? collect();
+    }
+
+    public function termsPending(): bool
+    {
+        $version = app(SettingsService::class)->get('legal.version');
+
+        return $version !== null && $version !== $this->terms_version;
     }
 
     public function isActive(): bool

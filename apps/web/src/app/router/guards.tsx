@@ -1,6 +1,7 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
 import { useCurrentUser } from '@/modules/auth/hooks/useCurrentUser'
 import { landingPath } from '@/modules/auth/landing'
+import { TermsGate } from '@/modules/settings/components/TermsGate'
 
 function FullScreenLoader() {
   return <div role="status" aria-label="Carregando" className="min-h-dvh bg-[oklch(0.145_0.006_270)]" />
@@ -12,6 +13,7 @@ export function RequireAuth() {
 
   if (isPending) return <FullScreenLoader />
   if (!user) return <Navigate to="/entrar" replace state={{ from: location.pathname + location.search }} />
+  if (user.terms_pending) return <TermsGate />
   return <Outlet />
 }
 

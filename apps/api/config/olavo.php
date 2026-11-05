@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'audit_retention_days' => (int) env('AUDIT_RETENTION_DAYS', 730),
+
     'uploads' => [
         // local: arquivos em disco, com URLs assinadas pelo Laravel. s3: R2, com URLs pré-assinadas.
         'driver' => env('UPLOADS_DRIVER', 'local'),

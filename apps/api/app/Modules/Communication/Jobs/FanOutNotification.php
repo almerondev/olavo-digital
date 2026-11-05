@@ -29,7 +29,7 @@ class FanOutNotification implements ShouldQueue
             return;
         }
 
-        $audience->eachChunk($notification->audience, function (array $userIds) use ($notification, $push) {
+        $audience->eachChunk($notification->audience, $notification->type, function (array $userIds) use ($notification, $push) {
             NotificationRecipient::insertOrIgnore(array_map(fn (int $userId) => [
                 'notification_id' => $notification->id,
                 'user_id' => $userId,

@@ -1,10 +1,13 @@
-import { Bell, BookOpen, CircleUser, FolderTree, GraduationCap, House, LayoutTemplate, Library, Megaphone, Radio, ShieldCheck } from 'lucide-react'
+import { Bell, BookOpen, CircleUser, ClipboardList, FolderTree, GraduationCap, House, LayoutDashboard, LayoutTemplate, Library, Megaphone, Radio, Settings, ShieldCheck, Users, UsersRound } from 'lucide-react'
 import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import { PanelLayout, type PanelNavItem } from '@/app/layouts/PanelLayout'
 import { StudentLayout } from '@/app/layouts/StudentLayout'
 import { GuestOnly, RequireAuth, RequirePermission } from './guards'
 
 const ADMIN_NAV: PanelNavItem[] = [
+  { to: '/admin', label: 'Visão geral', icon: LayoutDashboard, permission: 'analytics.view_all', end: true },
+  { to: '/admin/alunos', label: 'Alunos', icon: Users, permission: 'students.manage' },
+  { to: '/admin/turmas', label: 'Turmas e grupos', icon: UsersRound, permission: 'students.manage' },
   { to: '/admin/materiais', label: 'Materiais', icon: Library, permission: 'materials.manage_all' },
   { to: '/admin/home', label: 'Construtor da home', icon: LayoutTemplate, permission: 'home.manage' },
   { to: '/admin/ao-vivo', label: 'Ao vivo agora', icon: Radio, permission: 'live.manage' },
@@ -14,6 +17,8 @@ const ADMIN_NAV: PanelNavItem[] = [
   { to: '/admin/professores', label: 'Professores', icon: GraduationCap, permission: 'teachers.manage' },
   { to: '/admin/categorias', label: 'Categorias', icon: FolderTree, permission: 'categories.manage' },
   { to: '/admin/papeis', label: 'Papéis e permissões', icon: ShieldCheck, permission: 'roles.manage' },
+  { to: '/admin/auditoria', label: 'Auditoria', icon: ClipboardList, permission: 'audit.view' },
+  { to: '/admin/configuracoes', label: 'Configurações', icon: Settings, permission: 'settings.manage' },
 ]
 const TEACHER_NAV: PanelNavItem[] = [
   { to: '/professor', label: 'Início', icon: House, end: true },
@@ -74,6 +79,8 @@ export const router = createBrowserRouter([
           { path: '/redefinir-senha', lazy: async () => ({ Component: (await import('@/modules/auth/pages/ResetPasswordPage')).ResetPasswordPage }) },
         ],
       },
+      { path: '/termos', lazy: async () => ({ Component: (await import('@/modules/settings/pages/LegalPage')).TermsPage }) },
+      { path: '/privacidade', lazy: async () => ({ Component: (await import('@/modules/settings/pages/LegalPage')).PrivacyPage }) },
       {
         element: <RequireAuth />,
         children: [
@@ -138,6 +145,11 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="categories.manage" />,
                     children: [
+                      { path: 'alunos', lazy: async () => ({ Component: (await import('@/modules/people/pages/StudentsPage')).StudentsPage }) },
+                      { path: 'alunos/:id', lazy: async () => ({ Component: (await import('@/modules/people/pages/StudentEditorPage')).StudentEditorPage }) },
+                      { path: 'turmas', lazy: async () => ({ Component: (await import('@/modules/people/pages/GroupsPage')).GroupsPage }) },
+                      { path: 'auditoria', lazy: async () => ({ Component: (await import('@/modules/reports/pages/AuditPage')).AuditPage }) },
+                      { path: 'configuracoes', lazy: async () => ({ Component: (await import('@/modules/settings/pages/SettingsPage')).SettingsPage }) },
                       { path: 'avisos', lazy: async () => ({ Component: (await import('@/modules/communication/pages/AdminAnnouncementsPage')).AdminAnnouncementsPage }) },
                       { path: 'notificacoes', lazy: async () => ({ Component: (await import('@/modules/communication/pages/AdminNotificationsPage')).AdminNotificationsPage }) },
                       { path: 'cursos', lazy: async () => ({ Component: (await import('@/modules/categories/pages/CoursesPage')).CoursesPage }) },
