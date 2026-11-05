@@ -10,6 +10,7 @@ use App\Modules\Home\Models\HomeLayout;
 use App\Modules\Materials\Enums\MaterialStatus;
 use App\Modules\Materials\Enums\MaterialType;
 use App\Modules\Materials\Enums\MaterialVisibility;
+use App\Modules\Playback\Models\WatchHistory;
 use App\Modules\Uploads\Models\Upload;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -53,6 +54,11 @@ class Material extends Model
     public function banner(): BelongsTo
     {
         return $this->belongsTo(Upload::class, 'banner_upload_id');
+    }
+
+    public function views(): HasMany
+    {
+        return $this->hasMany(WatchHistory::class);
     }
 
     public function videoAsset(): BelongsTo

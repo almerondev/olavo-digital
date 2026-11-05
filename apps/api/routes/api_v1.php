@@ -6,6 +6,9 @@ use App\Modules\Auth\Http\Controllers\LoginController;
 use App\Modules\Auth\Http\Controllers\MeController;
 use App\Modules\Auth\Http\Controllers\PasswordResetController;
 use App\Modules\Auth\Http\Controllers\SessionController;
+use App\Modules\Cast\Http\Controllers\CastController;
+use App\Modules\Cast\Http\Controllers\TeacherAdminController;
+use App\Modules\Cast\Http\Controllers\TeacherPanelController;
 use App\Modules\Catalog\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Http\Controllers\CategoryTypeController;
 use App\Modules\Home\Http\Controllers\HomeBuilderController;
@@ -45,6 +48,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('home', [HomeController::class, 'show']);
         Route::get('home/sections/{section}/items', [HomeController::class, 'items']);
 
+        Route::get('teachers', [CastController::class, 'index']);
+        Route::get('teachers/{slug}', [CastController::class, 'show']);
+
         Route::get('catalog/filters', [CatalogController::class, 'filters']);
         Route::get('materials', [CatalogController::class, 'index']);
         Route::get('materials/{slug}', [CatalogController::class, 'show']);
@@ -72,7 +78,27 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
         Route::get('{upload}', [UploadController::class, 'show']);
     });
 
+    Route::prefix('teacher')->middleware('can:panel.teacher')->controller(TeacherPanelController::class)->group(function () {
+        Route::get('overview', 'overview');
+        Route::get('materials', 'materials');
+        Route::post('materials', 'storeMaterial');
+        Route::get('materials/{material}', 'showMaterial');
+        Route::put('materials/{material}', 'updateMaterial');
+        Route::delete('materials/{material}', 'destroyMaterial');
+        Route::post('materials/{material}/release', 'releaseMaterial');
+        Route::get('categories', 'categories');
+        Route::get('options/teachers', 'teachers');
+        Route::get('options/groups', 'groups');
+        Route::get('profile', 'profile');
+        Route::put('profile', 'updateProfile');
+    });
+
     Route::prefix('admin')->middleware('can:panel.admin')->group(function () {
+        Route::middleware('can:teachers.manage')->group(function () {
+            Route::get('teachers/publish-policy', [TeacherAdminController::class, 'publishPolicy']);
+            Route::put('teachers/publish-policy', [TeacherAdminController::class, 'updatePublishPolicy']);
+            Route::apiResource('teachers', TeacherAdminController::class)->except('show');
+        });
         Route::prefix('home')->middleware('can:home.manage')->controller(HomeBuilderController::class)->group(function () {
             Route::get('versions', 'versions');
             Route::post('draft', 'draft');

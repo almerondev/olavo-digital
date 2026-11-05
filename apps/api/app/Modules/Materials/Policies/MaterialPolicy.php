@@ -28,7 +28,8 @@ class MaterialPolicy
 
     public function publish(User $user, Material $material): bool
     {
-        return $user->can('materials.publish') && $this->update($user, $material);
+        return ($user->can('materials.publish') || $user->teacher?->publishesDirectly())
+            && $this->update($user, $material);
     }
 
     public function review(User $user, Material $material): bool

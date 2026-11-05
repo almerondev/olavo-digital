@@ -10,6 +10,7 @@ export interface PanelNavItem {
   label: string
   icon: LucideIcon
   permission?: string
+  end?: boolean
 }
 
 export function PanelLayout({ title, items }: { title: string; items: PanelNavItem[] }) {
@@ -30,6 +31,7 @@ export function PanelLayout({ title, items }: { title: string; items: PanelNavIt
             <NavLink
               key={item.to}
               to={item.to}
+              end={item.end}
               className={({ isActive }) =>
                 cn(
                   'flex shrink-0 items-center gap-2.5 rounded-md px-3 py-2 transition',

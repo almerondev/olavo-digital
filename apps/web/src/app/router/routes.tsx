@@ -1,4 +1,4 @@
-import { FolderTree, House, LayoutTemplate, Library, ShieldCheck } from 'lucide-react'
+import { CircleUser, FolderTree, GraduationCap, House, LayoutTemplate, Library, ShieldCheck } from 'lucide-react'
 import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import { PanelLayout, type PanelNavItem } from '@/app/layouts/PanelLayout'
 import { StudentLayout } from '@/app/layouts/StudentLayout'
@@ -7,10 +7,15 @@ import { GuestOnly, RequireAuth, RequirePermission } from './guards'
 const ADMIN_NAV: PanelNavItem[] = [
   { to: '/admin/materiais', label: 'Materiais', icon: Library, permission: 'materials.manage_all' },
   { to: '/admin/home', label: 'Construtor da home', icon: LayoutTemplate, permission: 'home.manage' },
+  { to: '/admin/professores', label: 'Professores', icon: GraduationCap, permission: 'teachers.manage' },
   { to: '/admin/categorias', label: 'Categorias', icon: FolderTree, permission: 'categories.manage' },
   { to: '/admin/papeis', label: 'Papéis e permissões', icon: ShieldCheck, permission: 'roles.manage' },
 ]
-const TEACHER_NAV: PanelNavItem[] = [{ to: '/professor', label: 'Início', icon: House }]
+const TEACHER_NAV: PanelNavItem[] = [
+  { to: '/professor', label: 'Início', icon: House, end: true },
+  { to: '/professor/materiais', label: 'Publicações', icon: Library },
+  { to: '/professor/perfil', label: 'Meu perfil', icon: CircleUser },
+]
 
 const RELOAD_FLAG = 'olavo:reloaded-after-stale-chunk'
 
@@ -76,6 +81,8 @@ export const router = createBrowserRouter([
               { path: 'minha-lista', lazy: async () => ({ Component: (await import('@/modules/favorites/pages/MyListPage')).MyListPage }) },
               { path: 'historico', lazy: async () => ({ Component: (await import('@/modules/history/pages/HistoryPage')).HistoryPage }) },
               { path: 'perfil', lazy: async () => ({ Component: (await import('@/modules/profile/pages/ProfilePage')).ProfilePage }) },
+              { path: 'elenco', lazy: async () => ({ Component: (await import('@/modules/cast/pages/CastPage')).CastPage }) },
+              { path: 'elenco/:slug', lazy: async () => ({ Component: (await import('@/modules/cast/pages/TeacherProfilePage')).TeacherProfilePage }) },
               { path: 'explorar', lazy: async () => ({ Component: (await import('@/modules/catalog/pages/ExplorePage')).ExplorePage }) },
               { path: 'materiais/:slug', lazy: async () => ({ Component: (await import('@/modules/materials/pages/MaterialDetailPage')).MaterialDetailPage }) },
             ],
@@ -109,6 +116,12 @@ export const router = createBrowserRouter([
                     ],
                   },
                   {
+                    element: <RequirePermission permission="teachers.manage" />,
+                    children: [
+                      { path: 'professores', lazy: async () => ({ Component: (await import('@/modules/teachers/pages/AdminTeachersPage')).AdminTeachersPage }) },
+                    ],
+                  },
+                  {
                     element: <RequirePermission permission="categories.manage" />,
                     children: [
                       { path: 'categorias', lazy: async () => ({ Component: (await import('@/modules/categories/pages/CategoriesPage')).CategoriesPage }) },
@@ -132,6 +145,10 @@ export const router = createBrowserRouter([
                 element: <PanelLayout title="Painel do professor" items={TEACHER_NAV} />,
                 children: [
                   { index: true, lazy: async () => ({ Component: (await import('@/modules/teachers/pages/TeacherHomePage')).TeacherHomePage }) },
+                  { path: 'materiais', lazy: async () => ({ Component: (await import('@/modules/teachers/pages/TeacherMaterialsPage')).TeacherMaterialsPage }) },
+                  { path: 'materiais/novo', lazy: async () => ({ Component: (await import('@/modules/teachers/pages/TeacherMaterialEditorPage')).TeacherMaterialEditorPage }) },
+                  { path: 'materiais/:id', lazy: async () => ({ Component: (await import('@/modules/teachers/pages/TeacherMaterialEditorPage')).TeacherMaterialEditorPage }) },
+                  { path: 'perfil', lazy: async () => ({ Component: (await import('@/modules/teachers/pages/TeacherOwnProfilePage')).TeacherOwnProfilePage }) },
                 ],
               },
             ],

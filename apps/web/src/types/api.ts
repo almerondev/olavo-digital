@@ -97,6 +97,7 @@ export interface Material {
   tags: string[]
   collaborator_ids?: number[]
   group_ids?: number[]
+  views_count?: number
   created_at: string
 }
 
@@ -243,4 +244,49 @@ export interface LayoutVersion {
   id: number
   status: 'published' | 'archived'
   published_at: string
+}
+
+export interface TeacherCard {
+  id: number
+  slug: string
+  name: string
+  short_bio: string | null
+  photo_urls: Record<string, string>
+  subjects: string[]
+}
+
+export interface TeacherSocial {
+  network: string
+  url: string
+}
+
+export interface TeacherProfile extends TeacherCard {
+  bio: string | null
+  specialties: string[]
+  banner_urls: Record<string, string>
+  socials: TeacherSocial[]
+}
+
+export interface TeacherAdmin extends TeacherProfile {
+  email: string | null
+  status: 'active' | 'inactive'
+  publish_mode: 'inherit' | 'immediate' | 'approval'
+  show_in_cast: boolean
+  photo: Upload | null
+  banner: Upload | null
+  category_ids: number[]
+  materials_count?: number
+}
+
+export interface CastProfile {
+  teacher: TeacherProfile
+  videos: CardMaterial[]
+  specials: CardMaterial[]
+  materials: CardMaterial[]
+}
+
+export interface TeacherOverview {
+  can_publish: boolean
+  totals: { published: number; pending_review: number; drafts: number; views: number; students: number }
+  top_materials: { id: number; title: string; status: MaterialStatus; views: number }[]
 }

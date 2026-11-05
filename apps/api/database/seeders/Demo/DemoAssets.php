@@ -22,6 +22,12 @@ class DemoAssets
         return $this->publicImage($name, $color, $seed, 1000, 1500);
     }
 
+    /** Foto ilustrativa do Elenco, com as iniciais, até a equipe enviar as fotos reais. @param array{0: int, 1: int, 2: int} $color */
+    public function portrait(string $name, array $color, int $seed): Upload
+    {
+        return $this->publicImage($name, $color, $seed, 900, 1200);
+    }
+
     /** Banner horizontal do hero e da página de detalhes. @param array{0: int, 1: int, 2: int} $color */
     public function banner(string $name, array $color, int $seed): Upload
     {

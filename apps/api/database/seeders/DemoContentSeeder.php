@@ -18,10 +18,10 @@ use Illuminate\Database\Seeder;
 class DemoContentSeeder extends Seeder
 {
     private const TEACHERS = [
-        ['Ana Beatriz Moura', 'ana-beatriz-moura'],
-        ['Rafael Teixeira', 'rafael-teixeira'],
-        ['Camila Duarte', 'camila-duarte'],
-        ['Marcos Vilela', 'marcos-vilela'],
+        ['Ana Beatriz Moura', 'ana-beatriz-moura', [176, 92, 52], ['historia', 'geografia', 'atualidades'], ['História do Brasil', 'História Geral', 'Geopolítica'], 'Professora de História e Geografia, apaixonada por conectar o passado às notícias de hoje.'],
+        ['Rafael Teixeira', 'rafael-teixeira', [52, 110, 196], ['matematica', 'fisica'], ['Funções', 'Geometria', 'Mecânica'], 'Professor de Matemática e Física que transforma fórmulas em raciocínio.'],
+        ['Camila Duarte', 'camila-duarte', [34, 146, 122], ['quimica', 'biologia'], ['Química Orgânica', 'Genética', 'Ecologia'], 'Professora de Química e Biologia, especialista em explicar o invisível.'],
+        ['Marcos Vilela', 'marcos-vilela', [190, 72, 112], ['linguagens', 'redacao'], ['Redação nota mil', 'Literatura', 'Interpretação'], 'Professor de Linguagens e Redação, responsável pela preparação para a prova discursiva.'],
     ];
 
     /** matéria => [cor, professor, materiais [título, descrição, tipo]] */
@@ -132,10 +132,23 @@ class DemoContentSeeder extends Seeder
         $workflow = app(MaterialWorkflow::class);
         $admin = User::where('email', 'admin@olavo.test')->firstOrFail();
 
-        $teachers = collect(self::TEACHERS)->map(fn (array $teacher) => Teacher::firstOrCreate(
-            ['slug' => $teacher[1]],
-            ['display_name' => $teacher[0], 'short_bio' => 'Professor do Olavo Pré-Vestibular.'],
-        ));
+        $teachers = collect(self::TEACHERS)->map(function (array $data, int $index) use ($assets) {
+            [$name, $slug, $color, $subjects, $specialties, $bio] = $data;
+
+            $teacher = Teacher::firstOrCreate(['slug' => $slug], ['display_name' => $name]);
+            $teacher->update([
+                'short_bio' => $bio,
+                'bio' => "{$bio} No Olavo Pré-Vestibular, prepara os alunos com aulas diretas, muita resolução de questões e foco no que mais cai nas provas.",
+                'specialties' => $specialties,
+                'sort_order' => $index,
+                'photo_upload_id' => $assets->portrait($name, $color, 900 + $index)->id,
+                'banner_upload_id' => $assets->banner("{$name} banner", $color, 950 + $index)->id,
+            ]);
+            $teacher->categories()->sync(Category::whereIn('slug', $subjects)->pluck('id'));
+            $teacher->socialLinks()->create(['network' => 'instagram', 'url' => "https://www.instagram.com/{$slug}"]);
+
+            return $teacher;
+        });
 
         $seed = 1;
 

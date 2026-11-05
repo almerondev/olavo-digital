@@ -24,7 +24,7 @@ class MaterialService
     {
         $saved = DB::transaction(function () use ($material, $data, $actor) {
             $type = MaterialType::from($data['type']);
-            $teacherId = $this->resolveTeacher($data, $actor);
+            $teacherId = $this->resolveTeacher($material, $data, $actor);
             $categoryIds = $data['category_ids'] ?? [];
 
             $this->assertCategoriesAllowed($categoryIds, $actor);
@@ -115,9 +115,12 @@ class MaterialService
     }
 
     /** @param array<string, mixed> $data */
-    private function resolveTeacher(array $data, User $actor): ?int
+    private function resolveTeacher(?Material $material, array $data, User $actor): ?int
     {
-        return $actor->can('materials.manage_all') ? ($data['teacher_id'] ?? null) : $actor->teacher?->id;
+        // Colaborador edita sem assumir a autoria do material.
+        return $actor->can('materials.manage_all')
+            ? ($data['teacher_id'] ?? null)
+            : ($material?->teacher_id ?? $actor->teacher?->id);
     }
 
     /** @param list<int> $categoryIds */

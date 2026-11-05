@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { materialsApi } from '../api/materials'
 import { useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { UploadField } from '@/components/media/UploadField'
@@ -11,9 +12,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { ApiError } from '@/services/http'
 import type { Material, MaterialType, Upload } from '@/types/api'
 import { toLocalInput } from '@/utils/format'
-import { materialsApi, type MaterialAction, type MaterialInput } from '../api/materials'
+import type { MaterialAction, MaterialInput } from '../api/materials'
+import { adminBackend, type MaterialBackend } from '../backends'
 import { StatusBadge } from '../components/StatusBadge'
-import { flattenTree, useCategories, useGroupOptions, useTeacherOptions } from '../hooks'
+import { flattenTree } from '../hooks'
 import { TYPE_ACCEPT, TYPE_LABELS, VISIBILITY_LABELS } from '../labels'
 
 interface FormState extends Omit<MaterialInput, 'cover_upload_id' | 'banner_upload_id' | 'file_upload_id' | 'subtitle_upload_id' | 'publish_at'> {
@@ -83,22 +85,33 @@ function toInput({ cover, banner, subtitle, file, publish_at, external_url, ...r
 const URL_TYPES: MaterialType[] = ['external_video', 'link']
 
 export function MaterialEditorPage() {
-  const id = Number(useParams().id) || null
-  const material = useQuery({ queryKey: ['admin', 'material', id], queryFn: () => materialsApi.get(id!), enabled: id !== null })
+  return <MaterialEditor backend={adminBackend} />
+}
 
-  if (id === null) return <MaterialForm key="new" material={null} />
+export function MaterialEditor({ backend, canPublish = true }: { backend: MaterialBackend; canPublish?: boolean }) {
+  const id = Number(useParams().id) || null
+  const material = useQuery({ queryKey: [backend.scope, 'material', id], queryFn: () => backend.get(id!), enabled: id !== null })
+
+  if (id === null) return <MaterialForm key="new" material={null} backend={backend} canPublish={canPublish} />
   if (material.isPending) return <p className="text-muted-foreground">Carregando material…</p>
   if (material.isError) return <p role="alert">Não encontramos este material.</p>
 
-  return <MaterialForm key={material.data.id} material={material.data} />
+  return <MaterialForm key={material.data.id} material={material.data} backend={backend} canPublish={canPublish} />
 }
 
-function MaterialForm({ material }: { material: Material | null }) {
+interface MaterialFormProps {
+  material: Material | null
+  backend: MaterialBackend
+  canPublish: boolean
+}
+
+function MaterialForm({ material, backend, canPublish }: MaterialFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const categories = useCategories()
-  const teachers = useTeacherOptions()
-  const groups = useGroupOptions()
+  const isAdmin = backend.scope === 'admin'
+  const categories = useQuery({ queryKey: [backend.scope, 'editor-categories'], queryFn: backend.categories })
+  const teachers = useQuery({ queryKey: [backend.scope, 'editor-teachers'], queryFn: backend.teachers })
+  const groups = useQuery({ queryKey: [backend.scope, 'editor-groups'], queryFn: backend.groups })
   const [form, setForm] = useState<FormState>(material ? fromMaterial(material) : EMPTY)
   const [tagDraft, setTagDraft] = useState('')
   const [rejectNote, setRejectNote] = useState('')
@@ -111,15 +124,15 @@ function MaterialForm({ material }: { material: Material | null }) {
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((current) => ({ ...current, [key]: value }))
 
   async function refresh(saved: Material) {
-    await queryClient.invalidateQueries({ queryKey: ['admin', 'materials'] })
-    queryClient.setQueryData(['admin', 'material', saved.id], saved)
-    if (!material) navigate(`/admin/materiais/${saved.id}`, { replace: true })
+    await queryClient.invalidateQueries({ queryKey: [backend.scope, 'materials'] })
+    queryClient.setQueryData([backend.scope, 'material', saved.id], saved)
+    if (!material) navigate(`${backend.basePath}/${saved.id}`, { replace: true })
   }
 
   async function persist() {
     const saved = savedId.current
-      ? await materialsApi.update(savedId.current, toInput(form))
-      : await materialsApi.create(toInput(form))
+      ? await backend.update(savedId.current, toInput(form))
+      : await backend.create(toInput(form))
 
     savedId.current = saved.id
     return saved
@@ -136,7 +149,7 @@ function MaterialForm({ material }: { material: Material | null }) {
   const act = useMutation({
     mutationFn: async ({ action, note }: { action: MaterialAction; note?: string }) => {
       const saved = action === 'release' ? await persist() : material!
-      return materialsApi.transition(saved.id, action, note ? { note } : undefined)
+      return backend.transition(saved.id, action, note ? { note } : undefined)
     },
     onSuccess: async (saved) => {
       setNotice('Status atualizado.')
@@ -147,14 +160,14 @@ function MaterialForm({ material }: { material: Material | null }) {
 
   const duplicate = useMutation({
     mutationFn: () => materialsApi.duplicate(material!.id),
-    onSuccess: (copy) => navigate(`/admin/materiais/${copy.id}`),
+    onSuccess: (copy) => navigate(`${backend.basePath}/${copy.id}`),
   })
 
   const remove = useMutation({
-    mutationFn: () => materialsApi.remove(material!.id),
+    mutationFn: () => backend.remove(material!.id),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['admin', 'materials'] })
-      navigate('/admin/materiais', { replace: true })
+      await queryClient.invalidateQueries({ queryKey: [backend.scope, 'materials'] })
+      navigate(backend.basePath, { replace: true })
     },
   })
 
@@ -189,8 +202,8 @@ function MaterialForm({ material }: { material: Material | null }) {
     <form onSubmit={submit} className="grid max-w-6xl gap-6" noValidate>
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <Link to="/admin/materiais" className="text-sm text-muted-foreground hover:underline">
-            Biblioteca de materiais
+          <Link to={backend.basePath} className="text-sm text-muted-foreground hover:underline">
+            {backend.listLabel}
           </Link>
           <h1 className="font-heading text-3xl font-bold tracking-tight">{material ? material.title : 'Novo material'}</h1>
         </div>
@@ -314,7 +327,7 @@ function MaterialForm({ material }: { material: Material | null }) {
 
         <aside className="grid content-start gap-5">
           <div className="grid gap-4 rounded-lg border bg-card p-5">
-            <div className="grid gap-2">
+            {isAdmin && <div className="grid gap-2">
               <Label htmlFor="teacher">Professor responsável</Label>
               <NativeSelect
                 id="teacher"
@@ -326,7 +339,7 @@ function MaterialForm({ material }: { material: Material | null }) {
                 {teachers.data?.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}</option>)}
               </NativeSelect>
               {fieldError('teacher_id') && <p className="text-sm text-destructive">{fieldError('teacher_id')}</p>}
-            </div>
+            </div>}
 
             <fieldset className="grid gap-2">
               <legend className="mb-1 text-sm font-medium">Colaboradores</legend>
@@ -385,10 +398,12 @@ function MaterialForm({ material }: { material: Material | null }) {
               <Checkbox checked={form.allow_download} onCheckedChange={(value) => set('allow_download', value === true)} />
               Permitir download
             </Label>
-            <Label className="flex items-center gap-2 font-normal">
-              <Checkbox checked={form.is_featured} onCheckedChange={(value) => set('is_featured', value === true)} />
-              Destaque
-            </Label>
+            {isAdmin && (
+              <Label className="flex items-center gap-2 font-normal">
+                <Checkbox checked={form.is_featured} onCheckedChange={(value) => set('is_featured', value === true)} />
+                Destaque
+              </Label>
+            )}
           </div>
 
           <div className="grid gap-2 rounded-lg border bg-card p-5">
@@ -396,19 +411,20 @@ function MaterialForm({ material }: { material: Material | null }) {
             {failure && Object.keys(failure.errors ?? {}).length > 0 && <p role="alert" className="text-sm text-destructive">Revise os campos destacados.</p>}
             {notice && !failure && <p role="status" className="text-sm text-muted-foreground">{notice}</p>}
 
-            {(status === 'draft' || status === 'pending_review') && (
+            {status === 'pending_review' && !isAdmin && <p className="text-sm text-muted-foreground">Aguardando aprovação do administrador.</p>}
+            {(status === 'draft' || (status === 'pending_review' && isAdmin)) && (
               <Button type="button" disabled={busy} onClick={() => { setNotice(null); act.mutate({ action: status === 'draft' ? 'release' : 'approve' }) }}>
-                {status === 'pending_review' ? 'Aprovar' : form.publish_at && new Date(form.publish_at) > new Date() ? 'Agendar publicação' : 'Publicar'}
+                {status === 'pending_review' ? 'Aprovar' : !canPublish ? 'Enviar para aprovação' : form.publish_at && new Date(form.publish_at) > new Date() ? 'Agendar publicação' : 'Publicar'}
               </Button>
             )}
             <Button type="submit" variant="outline" disabled={busy}>
               {save.isPending ? 'Salvando…' : status === 'draft' ? 'Salvar rascunho' : 'Salvar alterações'}
             </Button>
-            {status === 'published' && <Button type="button" variant="outline" disabled={busy} onClick={() => act.mutate({ action: 'archive' })}>Arquivar</Button>}
-            {status === 'archived' && <Button type="button" variant="outline" disabled={busy} onClick={() => act.mutate({ action: 'restore' })}>Restaurar</Button>}
-            {status === 'scheduled' && <Button type="button" variant="outline" disabled={busy} onClick={() => act.mutate({ action: 'unschedule' })}>Cancelar agendamento</Button>}
+            {isAdmin && status === 'published' && <Button type="button" variant="outline" disabled={busy} onClick={() => act.mutate({ action: 'archive' })}>Arquivar</Button>}
+            {isAdmin && status === 'archived' && <Button type="button" variant="outline" disabled={busy} onClick={() => act.mutate({ action: 'restore' })}>Restaurar</Button>}
+            {isAdmin && status === 'scheduled' && <Button type="button" variant="outline" disabled={busy} onClick={() => act.mutate({ action: 'unschedule' })}>Cancelar agendamento</Button>}
 
-            {status === 'pending_review' && (
+            {isAdmin && status === 'pending_review' && (
               <div className="grid gap-2 border-t pt-3">
                 <Label htmlFor="reject-note">Motivo da devolução</Label>
                 <Textarea id="reject-note" rows={2} value={rejectNote} onChange={(e) => setRejectNote(e.target.value)} />
@@ -417,9 +433,9 @@ function MaterialForm({ material }: { material: Material | null }) {
               </div>
             )}
 
-            {material && (
+            {material && (isAdmin || status === 'draft') && (
               <div className="flex flex-wrap gap-2 border-t pt-3">
-                <Button type="button" variant="ghost" size="sm" disabled={duplicate.isPending} onClick={() => duplicate.mutate()}>Duplicar</Button>
+                {isAdmin && <Button type="button" variant="ghost" size="sm" disabled={duplicate.isPending} onClick={() => duplicate.mutate()}>Duplicar</Button>}
                 <Button
                   type="button"
                   variant={confirmingDelete ? 'destructive' : 'ghost'}

@@ -147,7 +147,9 @@ function MaterialView({ material, openOnLoad, related, fromTeacher }: MaterialVi
           {facts.map(([label, value]) => (
             <div key={label}>
               <dt className="text-muted-foreground">{label}</dt>
-              <dd className="font-medium">{value}</dd>
+              <dd className="font-medium">
+                {label === 'Professor' && material.teacher_slug ? <Link to={`/elenco/${material.teacher_slug}`} className="hover:underline">{value}</Link> : value}
+              </dd>
             </div>
           ))}
         </dl>

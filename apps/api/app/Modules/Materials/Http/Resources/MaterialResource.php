@@ -39,6 +39,7 @@ class MaterialResource extends JsonResource
             'tags' => $this->tags->pluck('name'),
             'collaborator_ids' => $this->whenLoaded('collaborators', fn () => $this->collaborators->modelKeys()),
             'group_ids' => $this->whenLoaded('audienceTargets', fn () => $this->audienceTargets->pluck('student_group_id')->filter()->values()),
+            'views_count' => $this->whenCounted('views'),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
         ];

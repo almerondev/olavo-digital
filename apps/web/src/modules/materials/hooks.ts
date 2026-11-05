@@ -20,13 +20,13 @@ export function useGroupOptions() {
 }
 
 /** Ordena pais seguidos dos filhos, para exibir a hierarquia em listas e seletores. */
-export function flattenTree(categories: Category[]): { category: Category; depth: number }[] {
-  const byParent = new Map<number | null, Category[]>()
+export function flattenTree<T extends Pick<Category, 'id' | 'parent_id'>>(categories: T[]): { category: T; depth: number }[] {
+  const byParent = new Map<number | null, T[]>()
   for (const category of categories) {
     byParent.set(category.parent_id, [...(byParent.get(category.parent_id) ?? []), category])
   }
 
-  const walk = (parent: number | null, depth: number): { category: Category; depth: number }[] =>
+  const walk = (parent: number | null, depth: number): { category: T; depth: number }[] =>
     (byParent.get(parent) ?? []).flatMap((category) => [{ category, depth }, ...walk(category.id, depth + 1)])
 
   return walk(null, 0)

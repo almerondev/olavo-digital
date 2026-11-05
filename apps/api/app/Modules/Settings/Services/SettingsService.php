@@ -18,6 +18,17 @@ class SettingsService
         );
     }
 
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return Setting::where('key', $key)->value('value') ?? $default;
+    }
+
+    public function set(string $key, mixed $value, bool $public = false): void
+    {
+        Setting::updateOrCreate(['key' => $key], ['value' => $value, 'is_public' => $public]);
+        $this->flush();
+    }
+
     public function flush(): void
     {
         Cache::forget(self::PUBLIC_CACHE_KEY);

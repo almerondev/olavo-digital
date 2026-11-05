@@ -31,8 +31,6 @@ class DemoSeeder extends Seeder
         Teacher::firstOrCreate(['user_id' => $teacherUser->id], [
             'slug' => 'ana-beatriz-moura',
             'display_name' => 'Ana Beatriz Moura',
-            'short_bio' => 'Professora de História e especialista em revoluções industriais.',
-            'specialties' => ['História do Brasil', 'História Geral'],
         ]);
 
         $studentUser = $this->user('Lucas Andrade', 'aluno@olavo.test', $password);
