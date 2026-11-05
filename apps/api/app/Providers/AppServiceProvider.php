@@ -10,6 +10,9 @@ use App\Modules\Auth\Models\User;
 use App\Modules\Catalog\Models\Category;
 use App\Modules\Home\Models\Banner;
 use App\Modules\Home\Models\HomeSection;
+use App\Modules\LiveTv\Models\LiveSchedule;
+use App\Modules\LiveTv\Providers\LiveProvider;
+use App\Modules\LiveTv\Providers\SimulatedLiveProvider;
 use App\Modules\Materials\Models\Material;
 use App\Modules\Materials\Policies\MaterialPolicy;
 use App\Modules\Playback\Services\StudentLibrary;
@@ -28,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(PermissionResolver::class);
         $this->app->scoped(StudentLibrary::class);
+        $this->app->bind(LiveProvider::class, SimulatedLiveProvider::class);
         $this->app->bind(UploadStorage::class, fn () => config('olavo.uploads.driver') === 's3'
             ? new S3UploadStorage
             : new LocalUploadStorage);
@@ -42,6 +46,7 @@ class AppServiceProvider extends ServiceProvider
             'material' => Material::class,
             'home_section' => HomeSection::class,
             'banner' => Banner::class,
+            'live_schedule' => LiveSchedule::class,
         ]);
 
         Gate::policy(Role::class, RolePolicy::class);

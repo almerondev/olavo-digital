@@ -13,6 +13,9 @@ use App\Modules\Catalog\Http\Controllers\CategoryController;
 use App\Modules\Catalog\Http\Controllers\CategoryTypeController;
 use App\Modules\Home\Http\Controllers\HomeBuilderController;
 use App\Modules\Home\Http\Controllers\HomeController;
+use App\Modules\LiveTv\Http\Controllers\LiveAdminController;
+use App\Modules\LiveTv\Http\Controllers\LiveWebhookController;
+use App\Modules\LiveTv\Http\Controllers\TvController;
 use App\Modules\Materials\Http\Controllers\CatalogController;
 use App\Modules\Materials\Http\Controllers\MaterialController;
 use App\Modules\Materials\Http\Controllers\OptionsController;
@@ -24,6 +27,7 @@ use App\Modules\Uploads\Http\Controllers\UploadController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('config', PublicConfigController::class);
+Route::post('webhooks/live/{name}', LiveWebhookController::class)->withoutMiddleware('auth:sanctum');
 
 Route::get('uploads/{upload}/file', [UploadController::class, 'file'])->middleware('signed')->name('uploads.file');
 
@@ -47,6 +51,10 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::middleware('can:content.view')->group(function () {
         Route::get('home', [HomeController::class, 'show']);
         Route::get('home/sections/{section}/items', [HomeController::class, 'items']);
+
+        Route::get('tv/now', [TvController::class, 'now']);
+        Route::get('tv/schedule', [TvController::class, 'schedule']);
+        Route::get('tv/streams/{stream}/playback', [TvController::class, 'playback']);
 
         Route::get('teachers', [CastController::class, 'index']);
         Route::get('teachers/{slug}', [CastController::class, 'show']);
@@ -94,6 +102,20 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     });
 
     Route::prefix('admin')->middleware('can:panel.admin')->group(function () {
+        Route::prefix('live')->middleware('can:live.manage')->controller(LiveAdminController::class)->group(function () {
+            Route::get('channels', 'channels');
+            Route::post('channels', 'storeChannel');
+            Route::get('channels/{channel}/key', 'channelKey')->middleware('can:live.keys.view');
+            Route::post('channels/{channel}/key', 'rotateKey')->middleware('can:live.keys.view');
+            Route::post('channels/{channel}/simulate', 'simulate');
+            Route::get('schedules', 'schedules');
+            Route::post('schedules', 'storeSchedule');
+            Route::put('schedules/{schedule}', 'updateSchedule');
+            Route::post('schedules/{schedule}/cancel', 'cancelSchedule');
+            Route::get('streams', 'streams');
+            Route::post('streams/{stream}/end', 'endStream');
+        });
+
         Route::middleware('can:teachers.manage')->group(function () {
             Route::get('teachers/publish-policy', [TeacherAdminController::class, 'publishPolicy']);
             Route::put('teachers/publish-policy', [TeacherAdminController::class, 'updatePublishPolicy']);

@@ -9,6 +9,7 @@ use App\Modules\Home\Models\Banner;
 use App\Modules\Home\Models\HomeLayout;
 use App\Modules\Home\Models\HomeSection;
 use App\Modules\Home\Sources\SourceRegistry;
+use App\Modules\LiveTv\Services\LiveDirectory;
 use App\Modules\Materials\Http\Resources\MaterialCardResource;
 use App\Modules\Materials\Models\Material;
 use App\Modules\Materials\Services\MaterialAccessService;
@@ -29,6 +30,7 @@ class HomeService
         private SourceRegistry $sources,
         private MaterialAccessService $access,
         private HeroPreview $previews,
+        private LiveDirectory $live,
     ) {
     }
 
@@ -213,6 +215,26 @@ class HomeService
      */
     private function heroes(HomeLayout $layout, User $user, ?int $studentId, Collection $groupIds): array
     {
+        // Transmissão no ar passa na frente de qualquer destaque da página Início.
+        $stream = $layout->surface === HomeLayout::SURFACE_HOME ? $this->live->currentFor($user) : null;
+
+        if ($stream) {
+            return [[
+                'id' => 'live-'.$stream->id,
+                'title' => $stream->schedule->title,
+                'description' => $stream->schedule->description,
+                'cta_label' => 'Assistir ao vivo',
+                'image_urls' => (object) ($stream->schedule->cover?->imageUrls() ?: $stream->schedule->teacher?->banner?->imageUrls() ?: []),
+                'material_slug' => null,
+                'material_type' => null,
+                'teacher' => $stream->schedule->teacher?->display_name,
+                'category' => $stream->schedule->category?->name,
+                'external_url' => null,
+                'preview' => null,
+                'is_live' => true,
+            ]];
+        }
+
         $banners = $layout->banners->filter(fn (Banner $banner) => $banner->placement === 'hero'
             && $banner->isOnAir()
             && $banner->reaches($studentId, $groupIds));
@@ -271,6 +293,7 @@ class HomeService
             'category' => $material?->categories->firstWhere('pivot.is_primary', true)?->name,
             'external_url' => $banner?->external_url,
             'preview' => $material ? $this->previews->for($material) : null,
+            'is_live' => false,
         ];
     }
 }

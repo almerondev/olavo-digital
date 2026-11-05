@@ -5,11 +5,11 @@ import { Wordmark } from '@/components/navigation/Wordmark'
 import { cn } from '@/lib/utils'
 import { useCurrentUser } from '@/modules/auth/hooks/useCurrentUser'
 
-// Olavo TV entra aqui quando a página existir.
 const NAV_ITEMS = [
   { to: '/', label: 'Início' },
   { to: '/materiais', label: 'Materiais' },
   { to: '/explorar', label: 'Explorar' },
+  { to: '/olavo-tv', label: 'Olavo TV' },
   { to: '/elenco', label: 'Elenco' },
   { to: '/minha-lista', label: 'Minha lista', studentOnly: true },
 ]

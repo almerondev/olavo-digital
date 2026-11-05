@@ -48,10 +48,10 @@ export function TeacherProfilePage() {
     )
   }
 
-  const { teacher, videos, specials, materials } = profile.data
+  const { teacher, videos, specials, materials, live } = profile.data
   const banner = coverSrc(teacher.banner_urls)
   const photo = coverSrc(teacher.photo_urls)
-  const empty = videos.length + specials.length + materials.length === 0
+  const empty = videos.length + specials.length + materials.length + live.length === 0
 
   return (
     <>
@@ -91,6 +91,7 @@ export function TeacherProfilePage() {
         <Row title="Videoaulas" items={videos} />
         <Row title="Aulas especiais" items={specials} />
         <Row title="Materiais" items={materials} />
+        <Row title="Participações na Olavo TV" items={live} />
         {empty && <p className="px-4 text-muted-foreground sm:px-8 lg:px-12">Este professor ainda não tem conteúdos liberados para você.</p>}
       </div>
     </>

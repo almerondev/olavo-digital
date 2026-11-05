@@ -4,6 +4,7 @@ import { Link } from 'react-router'
 import { STUDENT_TYPE_LABELS } from '@/components/cards/typeLabels'
 import { coverSrc, coverSrcSet } from '@/components/media/cover'
 import { cn } from '@/lib/utils'
+import { LiveBadge } from '@/modules/olavo-tv/components/LiveBadge'
 import type { HomeHero } from '@/types/api'
 
 const WATCHABLE = ['video', 'external_video']
@@ -106,12 +107,18 @@ export function HeroBanner({ hero }: { hero: HomeHero }) {
       <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-background to-transparent" />
 
       <div className="relative max-w-2xl">
+        {hero.is_live && <div className="mb-3"><LiveBadge /></div>}
         {meta.length > 0 && <p className="mb-3 text-sm font-medium text-white/80">{meta.join(' · ')}</p>}
         <h1 className="font-heading text-4xl leading-[1.04] font-bold tracking-tight text-balance text-white sm:text-6xl">{hero.title}</h1>
         {hero.description && <p className="mt-4 line-clamp-3 max-w-xl text-base text-white/85 sm:text-lg">{hero.description}</p>}
 
         <div className="mt-6 flex flex-wrap gap-3">
-          {hero.material_slug ? (
+          {hero.is_live ? (
+            <Link to="/olavo-tv" className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 font-bold text-black transition hover:bg-white/85">
+              <Play className="size-5 fill-current" />
+              {label}
+            </Link>
+          ) : hero.material_slug ? (
             <>
               <Link
                 to={`/materiais/${hero.material_slug}?abrir=1`}

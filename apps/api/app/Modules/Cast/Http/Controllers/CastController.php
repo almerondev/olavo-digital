@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Cast\Http\Resources\TeacherCardResource;
 use App\Modules\Cast\Http\Resources\TeacherProfileResource;
 use App\Modules\Cast\Models\Teacher;
+use App\Modules\LiveTv\Models\LiveStream;
 use App\Modules\Materials\Enums\MaterialType;
 use App\Modules\Materials\Http\Resources\MaterialCardResource;
 use App\Modules\Materials\Models\Material;
@@ -45,6 +46,9 @@ class CastController extends Controller
             'videos' => $cards($own()->whereIn('type', MaterialType::audiovisual())->whereDoesntHave('categories', $special)),
             'specials' => $cards($own()->whereHas('categories', $special)),
             'materials' => $cards($own()->whereNotIn('type', MaterialType::audiovisual())),
+            'live' => $cards(Material::visibleTo($user)->whereIn('materials.id', LiveStream::whereNotNull('material_id')
+                ->whereHas('schedule', fn (Builder $schedule) => $schedule->where('teacher_id', $teacher->id))
+                ->select('material_id'))),
         ]]);
     }
 }

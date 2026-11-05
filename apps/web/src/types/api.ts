@@ -144,7 +144,8 @@ export interface MaterialDetail extends CardMaterial {
 }
 
 export interface HomeHero {
-  id: number
+  id: number | string
+  is_live: boolean
   title: string | null
   description: string | null
   cta_label: string | null
@@ -283,10 +284,55 @@ export interface CastProfile {
   videos: CardMaterial[]
   specials: CardMaterial[]
   materials: CardMaterial[]
+  live: CardMaterial[]
 }
 
 export interface TeacherOverview {
   can_publish: boolean
   totals: { published: number; pending_review: number; drafts: number; views: number; students: number }
   top_materials: { id: number; title: string; status: MaterialStatus; views: number }[]
+}
+
+export type ScheduleStatus = 'scheduled' | 'live' | 'ended' | 'cancelled'
+
+export interface LiveScheduleItem {
+  id: number
+  title: string
+  description: string | null
+  teacher: { id: number; name: string; slug: string } | null
+  category: { id: number; name: string } | null
+  cover_urls: Record<string, string>
+  starts_at: string
+  ends_at: string
+  status: ScheduleStatus
+  is_adhoc: boolean
+  notify_on_start: boolean
+  live_channel_id: number
+  group_ids?: number[]
+}
+
+export interface TvNow {
+  live: { stream_id: number; started_at: string; reconnecting: boolean; schedule: LiveScheduleItem } | null
+  upcoming: LiveScheduleItem[]
+  recordings: CardMaterial[]
+}
+
+export interface LiveChannelItem {
+  id: number
+  name: string
+  provider: string
+  ingest_rtmps_url: string | null
+  ingest_srt_url: string | null
+  on_air: boolean
+}
+
+export interface LiveStreamItem {
+  id: number
+  title: string
+  channel: string
+  started_at: string
+  ended_at: string | null
+  reconnecting: boolean
+  session: string
+  material: { id: number; status: MaterialStatus } | null
 }
