@@ -24,7 +24,7 @@ class UploadService
         $extension = Str::lower(pathinfo($name, PATHINFO_EXTENSION));
         $class = $this->classFor($extension);
 
-        if (! $class || ($purpose === UploadPurpose::Image && $class !== 'image')) {
+        if (! $class || ($purpose->isPublicImage() && $class !== 'image')) {
             throw ValidationException::withMessages(['name' => 'Este formato de arquivo não é permitido.']);
         }
 

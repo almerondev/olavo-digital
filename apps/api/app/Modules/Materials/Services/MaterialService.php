@@ -29,6 +29,7 @@ class MaterialService
 
             $this->assertCategoriesAllowed($categoryIds, $actor);
             $this->assertCover($data['cover_upload_id'] ?? null);
+            $this->assertCover($data['banner_upload_id'] ?? null);
 
             $attributes = [
                 'title' => $data['title'],
@@ -37,6 +38,7 @@ class MaterialService
                 'visibility' => $data['visibility'] ?? MaterialVisibility::All->value,
                 'teacher_id' => $teacherId,
                 'cover_upload_id' => $data['cover_upload_id'] ?? null,
+                'banner_upload_id' => $data['banner_upload_id'] ?? null,
                 'external_url' => $type->requiresUrl() ? ($data['external_url'] ?? null) : null,
                 'publish_at' => $data['publish_at'] ?? null,
                 'allow_download' => $data['allow_download'] ?? false,
@@ -58,6 +60,7 @@ class MaterialService
             $this->syncTags($material, $data['tags'] ?? []);
             $material->collaborators()->sync($data['collaborator_ids'] ?? []);
             $this->syncPrimaryFile($material, $type, $data['file_upload_id'] ?? null);
+            $this->syncSubtitle($material, $type, $data['subtitle_upload_id'] ?? null);
 
             $restricted = $material->visibility === MaterialVisibility::Restricted;
             $material->syncAudience($restricted ? ($data['group_ids'] ?? []) : [], $restricted ? ($data['student_ids'] ?? []) : []);
@@ -138,7 +141,7 @@ class MaterialService
     private function assertCover(?int $uploadId): void
     {
         if ($uploadId && Upload::whereKey($uploadId)->value('purpose') !== UploadPurpose::Image) {
-            throw ValidationException::withMessages(['cover_upload_id' => 'A capa precisa ser uma imagem.']);
+            throw ValidationException::withMessages(['cover_upload_id' => 'A capa e o banner precisam ser imagens.']);
         }
     }
 
@@ -202,6 +205,21 @@ class MaterialService
 
         $material->files()->where('role', MaterialFile::ROLE_PRIMARY)->delete();
         $material->files()->create(['upload_id' => $upload->id, 'role' => MaterialFile::ROLE_PRIMARY]);
+    }
+
+    private function syncSubtitle(Material $material, MaterialType $type, ?int $uploadId): void
+    {
+        $material->files()->where('role', MaterialFile::ROLE_SUBTITLE)->delete();
+
+        if ($type !== MaterialType::Video || ! $uploadId) {
+            return;
+        }
+
+        if (Upload::whereKey($uploadId)->value('file_class') !== 'subtitle') {
+            throw ValidationException::withMessages(['subtitle_upload_id' => 'A legenda precisa ser um arquivo .vtt.']);
+        }
+
+        $material->files()->create(['upload_id' => $uploadId, 'role' => MaterialFile::ROLE_SUBTITLE, 'locale' => 'pt-BR']);
     }
 
     private function uniqueSlug(string $title): string

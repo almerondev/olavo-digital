@@ -2,7 +2,6 @@
 
 namespace App\Modules\Uploads\Jobs;
 
-use App\Modules\Uploads\Enums\UploadPurpose;
 use App\Modules\Uploads\Enums\UploadStatus;
 use App\Modules\Uploads\Models\Upload;
 use App\Modules\Uploads\Services\FileInspector;
@@ -68,7 +67,7 @@ class ProcessUpload implements ShouldQueue
                 $attributes += $images->dimensions($local);
             }
 
-            $attributes += $upload->purpose === UploadPurpose::Image
+            $attributes += $upload->purpose->isPublicImage()
                 ? $this->publishImage($local, $extension, $images)
                 : $this->moveToPrivateFolder($extension);
 

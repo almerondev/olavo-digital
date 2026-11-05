@@ -9,4 +9,12 @@ enum UploadPurpose: string
 
     /** Capa, foto ou banner: bucket público, com variantes em WebP. */
     case Image = 'image';
+
+    /** Foto do próprio usuário: mesmo tratamento das imagens, liberada a qualquer conta. */
+    case Avatar = 'avatar';
+
+    public function isPublicImage(): bool
+    {
+        return $this !== self::Material;
+    }
 }

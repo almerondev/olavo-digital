@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class MaterialFile extends Model
 {
     public const ROLE_PRIMARY = 'primary';
+    public const ROLE_SUBTITLE = 'subtitle';
 
     public function upload(): BelongsTo
     {

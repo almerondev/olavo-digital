@@ -6,6 +6,7 @@ use App\Modules\Access\Concerns\HasAudience;
 use App\Modules\Auth\Models\User;
 use App\Modules\Cast\Models\Teacher;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Home\Models\HomeLayout;
 use App\Modules\Materials\Enums\MaterialStatus;
 use App\Modules\Materials\Enums\MaterialType;
 use App\Modules\Materials\Enums\MaterialVisibility;
@@ -19,7 +20,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['slug', 'title', 'description', 'type', 'status', 'visibility', 'teacher_id', 'cover_upload_id', 'video_asset_id', 'external_url', 'publish_at', 'published_at', 'archived_at', 'allow_download', 'is_featured', 'created_by', 'reviewed_by', 'reviewed_at', 'review_note'])]
+#[Fillable(['slug', 'title', 'description', 'type', 'status', 'visibility', 'teacher_id', 'cover_upload_id', 'banner_upload_id', 'video_asset_id', 'external_url', 'publish_at', 'published_at', 'archived_at', 'allow_download', 'is_featured', 'created_by', 'reviewed_by', 'reviewed_at', 'review_note'])]
 class Material extends Model
 {
     use HasAudience, SoftDeletes;
@@ -47,6 +48,11 @@ class Material extends Model
     public function cover(): BelongsTo
     {
         return $this->belongsTo(Upload::class, 'cover_upload_id');
+    }
+
+    public function banner(): BelongsTo
+    {
+        return $this->belongsTo(Upload::class, 'banner_upload_id');
     }
 
     public function videoAsset(): BelongsTo
@@ -92,6 +98,14 @@ class Material extends Model
                         ->targeting($user));
             })
             ->whereHas('categories', fn (Builder $categories) => $categories->visibleTo($user));
+    }
+
+    /** Início mostra vídeos; a página Materiais mostra todo o resto. */
+    public function scopeForSurface(Builder $query, string $surface): Builder
+    {
+        return $surface === HomeLayout::SURFACE_HOME
+            ? $query->whereIn('materials.type', MaterialType::audiovisual())
+            : $query->whereNotIn('materials.type', MaterialType::audiovisual());
     }
 
     public function isManagedBy(User $user): bool

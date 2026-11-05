@@ -21,7 +21,7 @@ export function PanelLayout({ title, items }: { title: string; items: PanelNavIt
       <aside className="dark flex shrink-0 flex-col bg-background text-foreground md:sticky md:top-0 md:h-dvh md:w-60">
         <div className="flex items-center justify-between gap-3 p-4 md:block">
           <Link to="/" aria-label="Ir para a área do aluno">
-            <Wordmark className="text-lg" />
+            <Wordmark className="h-11" />
           </Link>
           <p className="text-xs text-muted-foreground md:mt-1">{title}</p>
         </div>

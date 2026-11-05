@@ -58,7 +58,7 @@ return [
         ] : [
             'driver' => 'local',
             'root' => storage_path('app/public/uploads'),
-            'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/uploads',
+            'url' => env('UPLOADS_PUBLIC_URL', rtrim(env('APP_URL', 'http://localhost'), '/').'/storage/uploads'),
             'visibility' => 'public',
             'throw' => true,
         ],

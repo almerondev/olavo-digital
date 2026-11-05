@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useEffect } from 'react'
 import { RouterProvider } from 'react-router'
 import { router } from '@/app/router/routes'
 import { ApiError } from '@/services/http'
@@ -13,6 +14,18 @@ const queryClient = new QueryClient({
 })
 
 export function AppProviders() {
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        sessionStorage.removeItem('olavo:reloaded-after-stale-chunk')
+      } catch {
+        // Armazenamento bloqueado: só perde a proteção contra recarga repetida.
+      }
+    }, 10000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
   return (
     <QueryClientProvider client={queryClient}>
       <RouterProvider router={router} />

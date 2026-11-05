@@ -1,19 +1,42 @@
-import { FolderTree, House, Library, ShieldCheck } from 'lucide-react'
-import { createBrowserRouter, isRouteErrorResponse, Link, useRouteError } from 'react-router'
+import { FolderTree, House, LayoutTemplate, Library, ShieldCheck } from 'lucide-react'
+import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import { PanelLayout, type PanelNavItem } from '@/app/layouts/PanelLayout'
 import { StudentLayout } from '@/app/layouts/StudentLayout'
 import { GuestOnly, RequireAuth, RequirePermission } from './guards'
 
 const ADMIN_NAV: PanelNavItem[] = [
   { to: '/admin/materiais', label: 'Materiais', icon: Library, permission: 'materials.manage_all' },
+  { to: '/admin/home', label: 'Construtor da home', icon: LayoutTemplate, permission: 'home.manage' },
   { to: '/admin/categorias', label: 'Categorias', icon: FolderTree, permission: 'categories.manage' },
   { to: '/admin/papeis', label: 'Papéis e permissões', icon: ShieldCheck, permission: 'roles.manage' },
 ]
 const TEACHER_NAV: PanelNavItem[] = [{ to: '/professor', label: 'Início', icon: House }]
 
+const RELOAD_FLAG = 'olavo:reloaded-after-stale-chunk'
+
+/** Módulo antigo depois de uma atualização: recarregar uma vez resolve, e a marca evita repetir sem fim. */
+function reloadIfStaleChunk(error: unknown): boolean {
+  const stale = error instanceof Error && /dynamically imported module|Importing a module script failed/i.test(error.message)
+  if (!stale) return false
+
+  try {
+    if (sessionStorage.getItem(RELOAD_FLAG)) return false
+    sessionStorage.setItem(RELOAD_FLAG, '1')
+  } catch {
+    return false
+  }
+
+  location.reload()
+  return true
+}
+
 function RouteError() {
   const error = useRouteError()
   const notFound = isRouteErrorResponse(error) && error.status === 404
+
+  if (reloadIfStaleChunk(error)) return null
+
+  console.error(error)
 
   return (
     <main className="dark grid min-h-dvh place-items-center bg-background p-6 text-center text-foreground">
@@ -22,9 +45,9 @@ function RouteError() {
         <p className="mt-3 text-muted-foreground">
           {notFound ? 'O endereço não existe ou foi movido.' : 'Recarregue a página para tentar novamente.'}
         </p>
-        <Link to="/" className="mt-6 inline-block text-brand hover:underline">
+        <a href="/" className="mt-6 inline-block text-brand hover:underline">
           Voltar ao início
-        </Link>
+        </a>
       </div>
     </main>
   )
@@ -49,6 +72,18 @@ export const router = createBrowserRouter([
             element: <StudentLayout />,
             children: [
               { index: true, lazy: async () => ({ Component: (await import('@/modules/home/pages/HomePage')).HomePage }) },
+              { path: 'materiais', lazy: async () => ({ Component: (await import('@/modules/home/pages/HomePage')).MaterialsPage }) },
+              { path: 'minha-lista', lazy: async () => ({ Component: (await import('@/modules/favorites/pages/MyListPage')).MyListPage }) },
+              { path: 'historico', lazy: async () => ({ Component: (await import('@/modules/history/pages/HistoryPage')).HistoryPage }) },
+              { path: 'perfil', lazy: async () => ({ Component: (await import('@/modules/profile/pages/ProfilePage')).ProfilePage }) },
+              { path: 'explorar', lazy: async () => ({ Component: (await import('@/modules/catalog/pages/ExplorePage')).ExplorePage }) },
+              { path: 'materiais/:slug', lazy: async () => ({ Component: (await import('@/modules/materials/pages/MaterialDetailPage')).MaterialDetailPage }) },
+            ],
+          },
+          {
+            element: <RequirePermission permission="home.manage" />,
+            children: [
+              { path: '/admin/home/:id/previa', lazy: async () => ({ Component: (await import('@/modules/admin/home-builder/pages/HomePreviewPage')).HomePreviewPage }) },
             ],
           },
           {
@@ -65,6 +100,12 @@ export const router = createBrowserRouter([
                       { path: 'materiais', lazy: async () => ({ Component: (await import('@/modules/materials/pages/MaterialsLibraryPage')).MaterialsLibraryPage }) },
                       { path: 'materiais/novo', lazy: async () => ({ Component: (await import('@/modules/materials/pages/MaterialEditorPage')).MaterialEditorPage }) },
                       { path: 'materiais/:id', lazy: async () => ({ Component: (await import('@/modules/materials/pages/MaterialEditorPage')).MaterialEditorPage }) },
+                    ],
+                  },
+                  {
+                    element: <RequirePermission permission="home.manage" />,
+                    children: [
+                      { path: 'home', lazy: async () => ({ Component: (await import('@/modules/admin/home-builder/pages/HomeBuilderPage')).HomeBuilderPage }) },
                     ],
                   },
                   {

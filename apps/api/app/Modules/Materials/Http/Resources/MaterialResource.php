@@ -2,6 +2,7 @@
 
 namespace App\Modules\Materials\Http\Resources;
 
+use App\Modules\Materials\Models\MaterialFile;
 use App\Modules\Uploads\Http\Resources\UploadResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -20,7 +21,9 @@ class MaterialResource extends JsonResource
             'visibility' => $this->visibility->value,
             'teacher' => $this->teacher ? ['id' => $this->teacher->id, 'name' => $this->teacher->display_name] : null,
             'cover' => $this->cover ? new UploadResource($this->cover) : null,
+            'banner' => $this->banner ? new UploadResource($this->banner) : null,
             'file' => $this->primaryFile ? new UploadResource($this->primaryFile->upload) : null,
+            'subtitle' => ($subtitle = $this->files->firstWhere('role', MaterialFile::ROLE_SUBTITLE)) ? new UploadResource($subtitle->upload) : null,
             'external_url' => $this->external_url,
             'publish_at' => $this->publish_at?->toIso8601String(),
             'published_at' => $this->published_at?->toIso8601String(),

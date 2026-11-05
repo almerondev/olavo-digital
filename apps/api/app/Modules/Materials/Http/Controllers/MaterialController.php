@@ -20,7 +20,7 @@ use Illuminate\Validation\Rule;
 
 class MaterialController extends Controller
 {
-    private const LIST_RELATIONS = ['teacher', 'cover', 'primaryFile.upload', 'categories', 'tags'];
+    private const LIST_RELATIONS = ['teacher', 'cover', 'banner', 'primaryFile.upload', 'files.upload', 'categories', 'tags'];
 
     public function __construct(private MaterialService $materials, private MaterialWorkflow $workflow)
     {

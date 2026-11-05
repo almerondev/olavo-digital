@@ -1,4 +1,6 @@
 import { LogOut } from 'lucide-react'
+import { Link } from 'react-router'
+import { coverSrc } from '@/components/media/cover'
 import { useLogout } from '@/modules/auth/hooks/useLogout'
 import type { User } from '@/types/api'
 
@@ -9,15 +11,17 @@ function initials(name: string): string {
 
 export function UserMenu({ user }: { user: User }) {
   const logout = useLogout()
+  const avatar = coverSrc(user.avatar_urls)
 
   return (
-    <div className="flex items-center gap-3">
-      <span
-        title={user.name}
-        className="grid size-8 place-items-center rounded bg-brand text-xs font-bold text-brand-foreground"
+    <div className="flex items-center gap-2 sm:gap-3">
+      <Link
+        to="/perfil"
+        aria-label={`Perfil de ${user.name}`}
+        className="grid size-8 place-items-center overflow-hidden rounded-lg bg-brand text-xs font-bold text-brand-foreground"
       >
-        {initials(user.name)}
-      </span>
+        {avatar ? <img src={avatar} alt="" className="size-full object-cover" /> : initials(user.name)}
+      </Link>
       <button
         type="button"
         onClick={() => logout.mutate()}

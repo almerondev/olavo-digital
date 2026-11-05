@@ -35,7 +35,7 @@ class Upload extends Model
     /** @return array<int|string, string> URLs públicas por largura; vazio para arquivos privados. */
     public function imageUrls(): array
     {
-        if ($this->purpose !== UploadPurpose::Image || ! $this->isReady()) {
+        if (! $this->purpose->isPublicImage() || ! $this->isReady()) {
             return [];
         }
 

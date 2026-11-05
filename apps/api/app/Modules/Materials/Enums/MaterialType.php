@@ -15,6 +15,12 @@ enum MaterialType: string
     case Audio = 'audio';
     case Other = 'other';
 
+    /** @return list<string> */
+    public static function audiovisual(): array
+    {
+        return [self::Video->value, self::ExternalVideo->value];
+    }
+
     public function requiresUrl(): bool
     {
         return in_array($this, [self::ExternalVideo, self::Link], true);

@@ -1,16 +1,26 @@
 import { useEffect, useState } from 'react'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
 import { UserMenu } from '@/components/navigation/UserMenu'
 import { Wordmark } from '@/components/navigation/Wordmark'
 import { cn } from '@/lib/utils'
 import { useCurrentUser } from '@/modules/auth/hooks/useCurrentUser'
 
-// Explorar, Olavo TV, Elenco e Minha lista entram aqui quando cada página existir.
-const NAV_ITEMS = [{ to: '/', label: 'Início' }]
+// Olavo TV e Elenco entram aqui quando cada página existir.
+const NAV_ITEMS = [
+  { to: '/', label: 'Início' },
+  { to: '/materiais', label: 'Materiais' },
+  { to: '/explorar', label: 'Explorar' },
+  { to: '/minha-lista', label: 'Minha lista', studentOnly: true },
+]
 
 export function StudentLayout() {
   const { data: user } = useCurrentUser()
   const [scrolled, setScrolled] = useState(false)
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24)
@@ -27,21 +37,21 @@ export function StudentLayout() {
           scrolled ? 'bg-background shadow-lg shadow-black/40' : 'bg-gradient-to-b from-black/70 to-transparent',
         )}
       >
-        <div className="flex h-16 items-center gap-8 px-4 sm:px-8 lg:px-12">
-          <Wordmark />
-          <nav aria-label="Principal" className="flex items-center gap-5 text-sm">
-            {NAV_ITEMS.map((item) => (
+        <div className="flex h-16 items-center gap-3 px-4 sm:gap-8 sm:px-8 lg:px-12">
+          <Wordmark className="h-10 shrink-0 sm:h-12" />
+          <nav aria-label="Principal" className="flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-xs sm:gap-5 sm:text-sm">
+            {NAV_ITEMS.filter((item) => !item.studentOnly || user?.is_student).map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
-                end
+                end={item.to === '/'}
                 className={({ isActive }) => cn('transition hover:opacity-100', isActive ? 'font-semibold' : 'opacity-70')}
               >
                 {item.label}
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto">{user && <UserMenu user={user} />}</div>
+          <div className="ml-auto shrink-0">{user && <UserMenu user={user} />}</div>
         </div>
       </header>
       <Outlet />

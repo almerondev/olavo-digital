@@ -24,6 +24,10 @@ class FileInspector
     {
         $detected = (new finfo(FILEINFO_MIME_TYPE))->file($path) ?: 'application/octet-stream';
 
+        if ($extension === 'vtt') {
+            return str_starts_with(ltrim((string) file_get_contents($path, false, null, 0, 16), "\xEF\xBB\xBF"), 'WEBVTT') ? 'text/vtt' : $detected;
+        }
+
         if (isset(self::OOXML_FOLDERS[$extension])) {
             return $this->isOoxml($path, $extension) ? self::OOXML_MIMES[$extension] : $detected;
         }

@@ -41,6 +41,8 @@ class DemoSeeder extends Seeder
 
         $group = StudentGroup::firstOrCreate(['slug' => 'extensivo-2026'], ['name' => 'Extensivo 2026', 'year' => 2026]);
         $group->students()->syncWithoutDetaching([$student->id]);
+
+        $this->call(DemoContentSeeder::class);
     }
 
     private function user(string $name, string $email, string $password): User

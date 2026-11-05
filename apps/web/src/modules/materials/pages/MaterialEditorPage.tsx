@@ -16,8 +16,10 @@ import { StatusBadge } from '../components/StatusBadge'
 import { flattenTree, useCategories, useGroupOptions, useTeacherOptions } from '../hooks'
 import { TYPE_ACCEPT, TYPE_LABELS, VISIBILITY_LABELS } from '../labels'
 
-interface FormState extends Omit<MaterialInput, 'cover_upload_id' | 'file_upload_id' | 'publish_at'> {
+interface FormState extends Omit<MaterialInput, 'cover_upload_id' | 'banner_upload_id' | 'file_upload_id' | 'subtitle_upload_id' | 'publish_at'> {
+  subtitle: Upload | null
   cover: Upload | null
+  banner: Upload | null
   file: Upload | null
   publish_at: string
 }
@@ -29,6 +31,8 @@ const EMPTY: FormState = {
   visibility: 'all',
   teacher_id: null,
   cover: null,
+  banner: null,
+  subtitle: null,
   file: null,
   external_url: '',
   publish_at: '',
@@ -49,6 +53,8 @@ function fromMaterial(material: Material): FormState {
     visibility: material.visibility,
     teacher_id: material.teacher?.id ?? null,
     cover: material.cover,
+    banner: material.banner,
+    subtitle: material.subtitle,
     file: material.file,
     external_url: material.external_url ?? '',
     publish_at: toLocalInput(material.publish_at),
@@ -62,10 +68,12 @@ function fromMaterial(material: Material): FormState {
   }
 }
 
-function toInput({ cover, file, publish_at, external_url, ...rest }: FormState): MaterialInput {
+function toInput({ cover, banner, subtitle, file, publish_at, external_url, ...rest }: FormState): MaterialInput {
   return {
     ...rest,
     cover_upload_id: cover?.id ?? null,
+    banner_upload_id: banner?.id ?? null,
+    subtitle_upload_id: subtitle?.id ?? null,
     file_upload_id: file?.id ?? null,
     external_url: external_url || null,
     publish_at: publish_at ? new Date(publish_at).toISOString() : null,
@@ -241,6 +249,17 @@ function MaterialForm({ material }: { material: Material | null }) {
             />
           )}
 
+          {form.type === 'video' && (
+            <UploadField
+              label="Legenda (.vtt)"
+              purpose="material"
+              accept=".vtt"
+              value={form.subtitle}
+              error={fieldError('subtitle_upload_id')}
+              onChange={(upload) => set('subtitle', upload)}
+            />
+          )}
+
           <fieldset className="grid gap-2">
             <legend className="mb-1 text-sm font-medium">Categorias</legend>
             <p className="text-xs text-muted-foreground">Marque todas que se aplicam e escolha a principal.</p>
@@ -327,7 +346,8 @@ function MaterialForm({ material }: { material: Material | null }) {
               {teachers.data?.length === 1 && <p className="text-xs text-muted-foreground">Nenhum outro professor cadastrado.</p>}
             </fieldset>
 
-            <UploadField label="Capa" purpose="image" accept=".jpg,.jpeg,.png,.webp" value={form.cover} onChange={(upload) => set('cover', upload)} />
+            <UploadField label="Capa vertical (2:3)" purpose="image" accept=".jpg,.jpeg,.png,.webp" value={form.cover} onChange={(upload) => set('cover', upload)} />
+            <UploadField label="Banner horizontal (16:9)" purpose="image" accept=".jpg,.jpeg,.png,.webp" value={form.banner} onChange={(upload) => set('banner', upload)} />
           </div>
 
           <div className="grid gap-4 rounded-lg border bg-card p-5">

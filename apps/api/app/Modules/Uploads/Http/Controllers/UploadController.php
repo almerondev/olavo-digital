@@ -16,7 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class UploadController extends Controller
 {
@@ -28,11 +28,15 @@ class UploadController extends Controller
 
     public function store(StartUploadRequest $request): JsonResponse
     {
-        Gate::authorize('uploads-files');
+        $purpose = UploadPurpose::from($request->validated('purpose'));
+
+        if ($purpose !== UploadPurpose::Avatar) {
+            Gate::authorize('uploads-files');
+        }
 
         $result = $this->uploads->start(
             $request->user(),
-            UploadPurpose::from($request->validated('purpose')),
+            $purpose,
             $request->validated('name'),
             $request->validated('size'),
         );
@@ -88,9 +92,10 @@ class UploadController extends Controller
     }
 
     /** Equivalente local da leitura pré-assinada: só responde a URLs válidas e não expiradas. */
-    public function file(Upload $upload): StreamedResponse
+    public function file(Upload $upload): BinaryFileResponse
     {
-        return Storage::disk($upload->disk)->response($upload->object_key, $upload->original_name, [
+        // BinaryFileResponse atende requisições parciais, necessárias para avançar em vídeos.
+        return response()->file(Storage::disk($upload->disk)->path($upload->object_key), [
             'Content-Type' => $upload->mime_type ?? 'application/octet-stream',
             'X-Content-Type-Options' => 'nosniff',
         ]);

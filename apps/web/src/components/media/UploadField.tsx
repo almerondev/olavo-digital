@@ -9,7 +9,7 @@ import { formatBytes } from '@/utils/format'
 
 interface UploadFieldProps {
   label: string
-  purpose: 'material' | 'image'
+  purpose: 'material' | 'image' | 'avatar'
   accept?: string
   value: Upload | null
   error?: string

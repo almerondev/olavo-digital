@@ -8,6 +8,8 @@ export interface MaterialInput {
   visibility: MaterialVisibility
   teacher_id: number | null
   cover_upload_id: number | null
+  banner_upload_id: number | null
+  subtitle_upload_id: number | null
   file_upload_id: number | null
   external_url: string | null
   publish_at: string | null

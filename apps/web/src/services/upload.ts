@@ -48,7 +48,7 @@ export interface UploadCallbacks {
   onProcessing: () => void
 }
 
-export async function uploadFile(file: File, purpose: 'material' | 'image', callbacks: UploadCallbacks): Promise<Upload> {
+export async function uploadFile(file: File, purpose: 'material' | 'image' | 'avatar', callbacks: UploadCallbacks): Promise<Upload> {
   const { data, target } = await api<{ data: Upload; target: UploadTarget }>('/uploads', {
     method: 'POST',
     body: { purpose, name: file.name, size: file.size },

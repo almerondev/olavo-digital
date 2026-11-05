@@ -118,6 +118,16 @@ class UploadsTest extends TestCase
         $this->assertCount(3, $upload->imageUrls());
     }
 
+    public function test_subtitle_needs_webvtt_header(): void
+    {
+        $valid = $this->send('material', 'aula.vtt', "WEBVTT\n\n00:00.000 --> 00:02.000\nOlá\n");
+        $fake = $this->send('material', 'falsa.vtt', 'isto nao e legenda');
+
+        $this->assertSame(UploadStatus::Ready, $valid->status);
+        $this->assertSame('text/vtt', $valid->mime_type);
+        $this->assertSame(UploadStatus::Rejected, $fake->status);
+    }
+
     public function test_format_and_size_limits_are_enforced_before_sending(): void
     {
         $this->actingAs($this->admin, 'web');

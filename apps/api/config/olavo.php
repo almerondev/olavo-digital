@@ -50,6 +50,11 @@ return [
                 'extensions' => ['mp3', 'm4a', 'ogg', 'wav'],
                 'mimes' => ['audio/mpeg', 'audio/mp4', 'audio/x-m4a', 'video/mp4', 'audio/ogg', 'audio/wav', 'audio/x-wav'],
             ],
+            'subtitle' => [
+                'max_mb' => 5,
+                'extensions' => ['vtt'],
+                'mimes' => ['text/vtt'],
+            ],
             'video' => [
                 'max_mb' => 5120,
                 'extensions' => ['mp4', 'webm'],
