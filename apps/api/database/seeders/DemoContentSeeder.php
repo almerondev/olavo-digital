@@ -18,10 +18,10 @@ use Illuminate\Database\Seeder;
 class DemoContentSeeder extends Seeder
 {
     private const TEACHERS = [
-        ['Ana Beatriz Moura', 'ana-beatriz-moura', [176, 92, 52], ['historia', 'geografia', 'atualidades'], ['História do Brasil', 'História Geral', 'Geopolítica'], 'Professora de História e Geografia, apaixonada por conectar o passado às notícias de hoje.'],
-        ['Rafael Teixeira', 'rafael-teixeira', [52, 110, 196], ['matematica', 'fisica'], ['Funções', 'Geometria', 'Mecânica'], 'Professor de Matemática e Física que transforma fórmulas em raciocínio.'],
+        ['Ana Beatriz Moura', 'ana-beatriz-moura', [176, 92, 52], ['historia', 'geografia', 'atualidades', 'esa-historia-do-brasil', 'esa-geografia-do-brasil'], ['História do Brasil', 'História Geral', 'Geopolítica'], 'Professora de História e Geografia, apaixonada por conectar o passado às notícias de hoje.'],
+        ['Rafael Teixeira', 'rafael-teixeira', [52, 110, 196], ['matematica', 'fisica', 'esa-matematica', 'iffar-matematica'], ['Funções', 'Geometria', 'Mecânica'], 'Professor de Matemática e Física que transforma fórmulas em raciocínio.'],
         ['Camila Duarte', 'camila-duarte', [34, 146, 122], ['quimica', 'biologia'], ['Química Orgânica', 'Genética', 'Ecologia'], 'Professora de Química e Biologia, especialista em explicar o invisível.'],
-        ['Marcos Vilela', 'marcos-vilela', [190, 72, 112], ['linguagens', 'redacao'], ['Redação nota mil', 'Literatura', 'Interpretação'], 'Professor de Linguagens e Redação, responsável pela preparação para a prova discursiva.'],
+        ['Marcos Vilela', 'marcos-vilela', [190, 72, 112], ['linguagens', 'redacao', 'esa-portugues', 'esa-ingles', 'iffar-portugues'], ['Redação nota mil', 'Literatura', 'Interpretação'], 'Professor de Linguagens e Redação, responsável pela preparação para a prova discursiva.'],
     ];
 
     /** matéria => [cor, professor, materiais [título, descrição, tipo]] */
@@ -107,6 +107,22 @@ class DemoContentSeeder extends Seeder
         'atualidades' => [[120, 120, 140], 0, [
             ['Inteligência artificial e sociedade', 'O debate que pode aparecer nas provas.'],
         ]],
+        'esa-matematica' => [[52, 110, 196], 1, [
+            ['ESA: conjuntos e funções', 'Os temas de Matemática mais cobrados na prova da ESA.'],
+            ['ESA: geometria espacial', 'Volumes e áreas com questões de provas anteriores.'],
+        ]],
+        'esa-portugues' => [[190, 72, 112], 3, [
+            ['ESA: interpretação e gramática', 'Revisão de Português para a prova da ESA.'],
+        ]],
+        'esa-historia-do-brasil' => [[176, 92, 52], 0, [
+            ['ESA: Brasil Império', 'Do Primeiro Reinado à Proclamação da República.'],
+        ]],
+        'iffar-matematica' => [[52, 110, 196], 1, [
+            ['IFFar: operações e frações', 'Base de Matemática para o processo seletivo do IFFar.'],
+        ]],
+        'iffar-portugues' => [[190, 72, 112], 3, [
+            ['IFFar: leitura e interpretação', 'Como responder às questões de Português do IFFar.'],
+        ]],
     ];
 
     private const PRODUCTIONS = [
@@ -185,11 +201,14 @@ class DemoContentSeeder extends Seeder
             }
         }
 
+        // Clipes de demonstração só existem para as matérias do ENEM.
+        $clips = ['esa-matematica' => 'matematica', 'esa-portugues' => 'linguagens', 'esa-historia-do-brasil' => 'historia', 'iffar-matematica' => 'matematica', 'iffar-portugues' => 'linguagens'];
+
         foreach (self::VIDEOS as $slug => [$color, $teacherIndex, $items]) {
             $category = Category::where('slug', $slug)->firstOrFail();
 
             foreach ($items as [$title, $description]) {
-                $this->publishVideo($title, $description, $slug, $color, ++$seed, $teachers[$teacherIndex]->id, $category->id, $category->name, $admin);
+                $this->publishVideo($title, $description, $clips[$slug] ?? $slug, $color, ++$seed, $teachers[$teacherIndex]->id, $category->id, $category->name, $admin);
             }
         }
 

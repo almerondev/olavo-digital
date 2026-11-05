@@ -3,7 +3,7 @@ import { teacherPanelApi } from '@/modules/teachers/api'
 import type { Material, Option } from '@/types/api'
 import { materialsApi, type MaterialAction, type MaterialInput } from './api/materials'
 
-export type EditorCategory = Option & { parent_id: number | null }
+export type EditorCategory = Option & { parent_id: number | null; course_name?: string | null }
 
 /** O editor é o mesmo para administrador e professor; muda só de onde lê e o que pode fazer. */
 export interface MaterialBackend {

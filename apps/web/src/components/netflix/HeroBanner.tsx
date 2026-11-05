@@ -114,7 +114,7 @@ export function HeroBanner({ hero }: { hero: HomeHero }) {
 
         <div className="mt-6 flex flex-wrap gap-3">
           {hero.is_live ? (
-            <Link to="/olavo-tv" className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 font-bold text-black transition hover:bg-white/85">
+            <Link to="/ao-vivo" className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 font-bold text-black transition hover:bg-white/85">
               <Play className="size-5 fill-current" />
               {label}
             </Link>

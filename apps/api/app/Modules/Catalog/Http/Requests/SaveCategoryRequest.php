@@ -14,6 +14,7 @@ class SaveCategoryRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'category_type_id' => ['required', 'integer', 'exists:category_types,id'],
             'parent_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->whereNull('deleted_at')],
+            'course_id' => ['nullable', 'integer', Rule::exists('courses', 'id')->whereNull('deleted_at')],
             'description' => ['nullable', 'string', 'max:2000'],
             'icon' => ['nullable', 'string', 'max:60'],
             'cover_upload_id' => ['nullable', 'integer', 'exists:uploads,id'],

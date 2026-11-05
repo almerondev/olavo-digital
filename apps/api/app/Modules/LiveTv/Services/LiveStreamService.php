@@ -2,171 +2,82 @@
 
 namespace App\Modules\LiveTv\Services;
 
+use App\Modules\Auth\Models\User;
 use App\Modules\LiveTv\Enums\ScheduleStatus;
 use App\Modules\LiveTv\Events\LiveStreamStarted;
-use App\Modules\LiveTv\Jobs\EndDisconnectedStream;
-use App\Modules\LiveTv\Models\LiveChannel;
 use App\Modules\LiveTv\Models\LiveSchedule;
 use App\Modules\LiveTv\Models\LiveStream;
-use App\Modules\LiveTv\Providers\LiveEvent;
 use App\Modules\Materials\Enums\MaterialStatus;
 use App\Modules\Materials\Enums\MaterialType;
 use App\Modules\Materials\Models\Material;
-use App\Modules\Materials\Models\MaterialFile;
+use App\Modules\Materials\Models\VideoAsset;
 use App\Support\Audit\Audit;
+use App\Support\Http\ApiException;
+use App\Support\YouTubeUrl;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-/** Aplica os eventos do provedor. Eles podem chegar repetidos ou fora de ordem. */
+/** Inicia e encerra pelo painel: o vídeo vem do YouTube, e aqui fica o controle de quem assiste. */
 class LiveStreamService
 {
-    /** Tolerância para o encoder voltar sem encerrar a aula nem notificar de novo. */
-    private const GRACE_SECONDS = 180;
-
-    private const MATCH_MINUTES_BEFORE = 30;
-    private const MATCH_MINUTES_AFTER = 60;
-
-    public function handle(LiveEvent $event): void
+    public function start(LiveSchedule $schedule, User $actor): LiveStream
     {
-        $channel = LiveChannel::where('provider_input_id', $event->inputId)->first();
-
-        if (! $channel) {
-            return;
+        if (! YouTubeUrl::id($schedule->youtube_url)) {
+            throw new ApiException('Cole o link da live do YouTube antes de iniciar.', 'youtube_url_required', 422);
         }
 
-        match ($event->type) {
-            LiveEvent::CONNECTED => $this->connected($channel, $event),
-            LiveEvent::DISCONNECTED => $this->disconnected($channel),
-            LiveEvent::RECORDING_READY => $this->recordingReady($channel, $event),
-        };
-    }
-
-    public function endIfStillDisconnected(int $streamId, string $disconnectedAt): void
-    {
-        DB::transaction(function () use ($streamId, $disconnectedAt) {
-            $stream = LiveStream::lockForUpdate()->find($streamId);
-
-            // Voltou no prazo, ou já caiu outra vez e existe outro agendamento para esta queda.
-            if (! $stream || $stream->ended_at || $stream->disconnected_at?->toIso8601String() !== $disconnectedAt) {
-                return;
+        $stream = DB::transaction(function () use ($schedule) {
+            if (LiveStream::open()->lockForUpdate()->exists()) {
+                throw new ApiException('Já existe uma transmissão no ar. Encerre-a antes de iniciar outra.', 'stream_on_air', 409);
             }
 
-            $this->finish($stream);
-        });
-    }
-
-    /** Encerramento pelo painel, quando o encoder não avisa. */
-    public function endNow(LiveStream $stream): void
-    {
-        DB::transaction(fn () => $this->finish($stream));
-    }
-
-    private function finish(LiveStream $stream): void
-    {
-        $stream->update(['ended_at' => $stream->disconnected_at ?? now()]);
-        $stream->schedule->update(['status' => ScheduleStatus::Ended]);
-        Audit::record('live.ended', $stream);
-    }
-
-    private function connected(LiveChannel $channel, LiveEvent $event): void
-    {
-        $started = DB::transaction(function () use ($channel, $event) {
-            $open = LiveStream::where('live_channel_id', $channel->id)->open()->lockForUpdate()->first();
-
-            if ($open) {
-                $open->update(['disconnected_at' => null]);
-
-                return null;
-            }
-
-            if (LiveStream::where('live_channel_id', $channel->id)->where('provider_session_ref', $event->sessionRef)->exists()) {
-                return null;
-            }
-
-            $schedule = $this->matchSchedule($channel);
             $schedule->update(['status' => ScheduleStatus::Live]);
 
-            return LiveStream::create([
-                'live_schedule_id' => $schedule->id,
-                'live_channel_id' => $channel->id,
-                'provider_session_ref' => $event->sessionRef,
-                'started_at' => now(),
-            ]);
+            return LiveStream::create(['live_schedule_id' => $schedule->id, 'started_at' => now()]);
         });
 
-        if ($started) {
-            Audit::record('live.started', $started);
-            LiveStreamStarted::dispatch($started);
-        }
+        Audit::record('live.started', null, ['stream_id' => $stream->id], $actor);
+        LiveStreamStarted::dispatch($stream);
+
+        return $stream;
     }
 
-    private function disconnected(LiveChannel $channel): void
+    /** O link da live continua válido no YouTube depois do fim, então ele já é a gravação. */
+    public function end(LiveStream $stream, User $actor): void
     {
-        $stream = LiveStream::where('live_channel_id', $channel->id)->open()->first();
-
-        if (! $stream || $stream->disconnected_at) {
-            return;
+        if ($stream->ended_at) {
+            throw new ApiException('Esta transmissão já terminou.', 'stream_ended', 409);
         }
 
-        $at = now()->startOfSecond();
-        $stream->update(['disconnected_at' => $at]);
-
-        EndDisconnectedStream::dispatch($stream->id, $at->toIso8601String())->delay(now()->addSeconds(self::GRACE_SECONDS));
-    }
-
-    private function matchSchedule(LiveChannel $channel): LiveSchedule
-    {
-        $planned = LiveSchedule::query()
-            ->where('live_channel_id', $channel->id)
-            ->where('status', ScheduleStatus::Scheduled)
-            ->whereBetween('starts_at', [now()->subMinutes(self::MATCH_MINUTES_AFTER), now()->addMinutes(self::MATCH_MINUTES_BEFORE)])
-            ->orderByRaw('abs(timestampdiff(second, starts_at, ?))', [now()->toDateTimeString()])
-            ->first();
-
-        return $planned ?? LiveSchedule::create([
-            'live_channel_id' => $channel->id,
-            'title' => 'Transmissão ao vivo',
-            'starts_at' => now(),
-            'ends_at' => now()->addHour(),
-            'status' => ScheduleStatus::Scheduled,
-            'is_adhoc' => true,
-            'notify_on_start' => false,
-        ]);
-    }
-
-    /** A gravação vira rascunho: a equipe completa capa e descrição antes de publicar. */
-    private function recordingReady(LiveChannel $channel, LiveEvent $event): void
-    {
-        $stream = LiveStream::with('schedule')
-            ->where('live_channel_id', $channel->id)
-            ->where('provider_session_ref', $event->sessionRef)
-            ->first();
-
-        if (! $stream || $stream->material_id || ! $event->recordingUploadId) {
-            return;
-        }
-
-        DB::transaction(function () use ($stream, $event) {
+        DB::transaction(function () use ($stream) {
             $schedule = $stream->schedule;
 
-            $material = Material::create([
-                'slug' => $this->uniqueSlug($schedule->title),
-                'title' => $schedule->title,
-                'description' => $schedule->description,
-                'type' => MaterialType::Video,
-                'status' => MaterialStatus::Draft,
-                'teacher_id' => $schedule->teacher_id,
-                'cover_upload_id' => $schedule->cover_upload_id,
-            ]);
-
-            $material->files()->create(['upload_id' => $event->recordingUploadId, 'role' => MaterialFile::ROLE_PRIMARY]);
-
-            if ($schedule->category_id) {
-                $material->categories()->attach($schedule->category_id, ['is_primary' => true]);
-            }
-
-            $stream->update(['material_id' => $material->id]);
+            $stream->update(['ended_at' => now(), 'material_id' => $this->recordingDraft($schedule)->id]);
+            $schedule->update(['status' => ScheduleStatus::Ended]);
         });
+
+        Audit::record('live.ended', null, ['stream_id' => $stream->id], $actor);
+    }
+
+    private function recordingDraft(LiveSchedule $schedule): Material
+    {
+        $material = Material::create([
+            'slug' => $this->uniqueSlug($schedule->title),
+            'title' => $schedule->title,
+            'description' => $schedule->description,
+            'type' => MaterialType::ExternalVideo,
+            'status' => MaterialStatus::Draft,
+            'teacher_id' => $schedule->teacher_id,
+            'cover_upload_id' => $schedule->cover_upload_id,
+            'external_url' => $schedule->youtube_url,
+            'video_asset_id' => VideoAsset::firstOrCreate(['provider' => 'youtube', 'provider_ref' => $schedule->youtube_url])->id,
+        ]);
+
+        if ($schedule->category_id) {
+            $material->categories()->attach($schedule->category_id, ['is_primary' => true]);
+        }
+
+        return $material;
     }
 
     private function uniqueSlug(string $title): string

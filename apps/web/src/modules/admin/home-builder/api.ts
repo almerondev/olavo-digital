@@ -37,7 +37,7 @@ export const homeBuilderApi = {
   publish: (id: number) => api<{ data: BuilderLayout }>(`${BASE}/layouts/${id}/publish`, { method: 'POST' }),
   restore: (id: number) => api<{ data: BuilderLayout }>(`${BASE}/layouts/${id}/restore`, { method: 'POST' }),
   discard: (id: number) => api<void>(`${BASE}/layouts/${id}`, { method: 'DELETE' }),
-  preview: (id: number, group: string) => api<{ data: HomeData }>(`${BASE}/layouts/${id}/preview${group ? `?group=${group}` : ''}`).then((r) => r.data),
+  preview: (id: number, group: string, course: string) => api<{ data: HomeData }>(`${BASE}/layouts/${id}/preview?group=${group}&course=${course}`).then((r) => r.data),
   createSection: (layout: number, body: SectionInput) => api<{ data: BuilderSection }>(`${BASE}/layouts/${layout}/sections`, { method: 'POST', body }),
   updateSection: (id: number, body: SectionInput) => api<{ data: BuilderSection }>(`${BASE}/sections/${id}`, { method: 'PUT', body }),
   removeSection: (id: number) => api<void>(`${BASE}/sections/${id}`, { method: 'DELETE' }),

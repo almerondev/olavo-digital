@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/ui/native-select'
-import { flattenTree, useCategories, useTeacherOptions } from '@/modules/materials/hooks'
+import { courseLabel, flattenTree, useCategories, useTeacherOptions } from '@/modules/materials/hooks'
 import { ApiError } from '@/services/http'
 import type { BuilderSection } from '@/types/api'
 import { homeBuilderApi } from '../api'
@@ -92,7 +92,7 @@ export function SectionEditor({ layoutId, section, onSaved, onClose }: SectionEd
           <NativeSelect id="section-category" value={form.category_id ?? ''} aria-invalid={Boolean(error?.fieldError('category_id'))} onChange={(e) => setForm({ ...form, category_id: e.target.value ? Number(e.target.value) : null })}>
             <option value="">Selecione</option>
             {flattenTree(categories.data ?? []).map(({ category, depth }) => (
-              <option key={category.id} value={category.id}>{'— '.repeat(depth)}{category.name}</option>
+              <option key={category.id} value={category.id}>{'— '.repeat(depth)}{courseLabel(category)}</option>
             ))}
           </NativeSelect>
           {error?.fieldError('category_id') && <p className="text-sm text-destructive">{error.fieldError('category_id')}</p>}

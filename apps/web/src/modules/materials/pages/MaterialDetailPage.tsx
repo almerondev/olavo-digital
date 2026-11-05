@@ -12,7 +12,7 @@ import { PlayerScreen } from '@/modules/video-player/PlayerScreen'
 import { ApiError } from '@/services/http'
 import type { CardMaterial, MaterialDetail } from '@/types/api'
 import { formatBytes } from '@/utils/format'
-import { embedUrl, ExternalVideoViewer, FileViewer } from '../viewers/FileViewer'
+import { ExternalVideoViewer, FileViewer } from '../viewers/FileViewer'
 
 const INLINE_CLASSES = ['pdf', 'image', 'audio', 'video']
 
@@ -66,7 +66,7 @@ interface MaterialViewProps {
 
 function MaterialView({ material, openOnLoad, related, fromTeacher }: MaterialViewProps) {
   const opensInline = INLINE_CLASSES.includes(material.file?.class ?? '')
-  const embeds = embedUrl(material) !== null
+  const embeds = material.embed_url !== null
   const canOpenHere = opensInline || embeds
   const [viewing, setViewing] = useState(openOnLoad && canOpenHere)
   const [downloadError, setDownloadError] = useState<string | null>(null)

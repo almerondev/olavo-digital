@@ -16,6 +16,8 @@ class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'category_type_id' => $this->category_type_id,
             'parent_id' => $this->parent_id,
+            'course_id' => $this->course_id,
+            'course_name' => $this->course?->name,
             'description' => $this->description,
             'icon' => $this->icon,
             'cover' => $this->cover ? new UploadResource($this->cover) : null,

@@ -20,6 +20,11 @@ export function useGroupOptions() {
 }
 
 /** Ordena pais seguidos dos filhos, para exibir a hierarquia em listas e seletores. */
+/** Duas matérias podem ter o mesmo nome em cursos diferentes. */
+export function courseLabel(category: { name: string; course_name?: string | null }): string {
+  return category.course_name ? `${category.name} · ${category.course_name}` : category.name
+}
+
 export function flattenTree<T extends Pick<Category, 'id' | 'parent_id'>>(categories: T[]): { category: T; depth: number }[] {
   const byParent = new Map<number | null, T[]>()
   for (const category of categories) {

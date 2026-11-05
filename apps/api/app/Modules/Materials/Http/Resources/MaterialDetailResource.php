@@ -2,6 +2,8 @@
 
 namespace App\Modules\Materials\Http\Resources;
 
+use App\Modules\Materials\Enums\MaterialType;
+use App\Support\YouTubeUrl;
 use Illuminate\Http\Request;
 
 class MaterialDetailResource extends MaterialCardResource
@@ -17,6 +19,7 @@ class MaterialDetailResource extends MaterialCardResource
             'published_at' => $this->published_at?->toIso8601String(),
             'external_url' => $this->external_url,
             'video_provider' => $this->videoAsset?->provider,
+            'embed_url' => YouTubeUrl::embed($this->type === MaterialType::ExternalVideo ? $this->external_url : null, ['autoplay' => 1, 'rel' => 0]),
             'allow_download' => $this->allow_download,
             'file' => $viewable ? [
                 'name' => $viewable->original_name,

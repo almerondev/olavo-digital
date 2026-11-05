@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { NativeSelect } from '@/components/ui/native-select'
 import { cn } from '@/lib/utils'
-import { useCategories } from '@/modules/materials/hooks'
+import { courseLabel, useCategories } from '@/modules/materials/hooks'
 import { ApiError } from '@/services/http'
 import type { TeacherAdmin } from '@/types/api'
 import { adminTeachersApi } from '../api'
@@ -146,7 +146,7 @@ function TeacherEditor({ teacher, onDone, onClose }: { teacher: TeacherAdmin | n
 
       <fieldset className="grid gap-2">
         <legend className="mb-1 text-sm font-medium">Matérias autorizadas</legend>
-        <p className="text-xs text-muted-foreground">O professor só publica nas matérias marcadas.</p>
+        <p className="text-xs text-muted-foreground">Marque quantas precisar, de qualquer curso. O professor só publica nas matérias marcadas.</p>
         <div className="grid max-h-48 gap-1 overflow-y-auto rounded-lg border p-2 sm:grid-cols-2">
           {categories.data?.map((category) => (
             <Label key={category.id} className="flex items-center gap-2 font-normal">
@@ -157,7 +157,7 @@ function TeacherEditor({ teacher, onDone, onClose }: { teacher: TeacherAdmin | n
                   category_ids: value === true ? [...account.category_ids, category.id] : account.category_ids.filter((id) => id !== category.id),
                 })}
               />
-              {category.name}
+              {courseLabel(category)}
             </Label>
           ))}
         </div>

@@ -5,6 +5,7 @@ namespace App\Modules\Home\Services;
 use App\Modules\Access\Models\AudienceTarget;
 use App\Modules\Access\Models\StudentGroup;
 use App\Modules\Auth\Models\User;
+use App\Modules\Catalog\Models\Category;
 use App\Modules\Home\Models\Banner;
 use App\Modules\Home\Models\HomeLayout;
 use App\Modules\Home\Models\HomeSection;
@@ -52,11 +53,11 @@ class HomeService
      *
      * @return array{hero: list<array<string, mixed>>, sections: list<array<string, mixed>>}
      */
-    public function preview(HomeLayout $layout, ?StudentGroup $group): array
+    public function preview(HomeLayout $layout, ?StudentGroup $group, ?int $courseId = null): array
     {
         $layout->load('sections.audienceTargets', 'banners.audienceTargets', 'banners.image');
 
-        return $this->build($layout, User::simulatedStudent($group ? [$group->id] : []), PHP_INT_MAX);
+        return $this->build($layout, User::simulatedStudent($group ? [$group->id] : [], $courseId ? [$courseId] : []), PHP_INT_MAX);
     }
 
     /** @return array{hero: list<array<string, mixed>>, sections: list<array<string, mixed>>} */
@@ -64,10 +65,14 @@ class HomeService
     {
         [$studentId, $groupIds] = $this->audienceOf($user);
 
+        // Seção de matéria de outro curso nem é consultada.
+        $categories = Category::visibleTo($user)->pluck('id');
+
         $sections = $layout->sections
             ->filter(fn (HomeSection $section) => $section->isOnAir()
                 && $section->reaches($studentId, $groupIds)
-                && $this->sources->supports($section->source_type))
+                && $this->sources->supports($section->source_type)
+                && ($section->source_type !== 'category' || $categories->contains($section->category_id)))
             ->values();
 
         return [

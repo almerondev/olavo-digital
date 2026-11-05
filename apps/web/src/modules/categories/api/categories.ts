@@ -5,6 +5,7 @@ export interface CategoryInput {
   name: string
   category_type_id: number
   parent_id: number | null
+  course_id: number | null
   description: string
   icon: string
   cover_upload_id: number | null

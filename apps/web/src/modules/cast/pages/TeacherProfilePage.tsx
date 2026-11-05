@@ -91,7 +91,7 @@ export function TeacherProfilePage() {
         <Row title="Videoaulas" items={videos} />
         <Row title="Aulas especiais" items={specials} />
         <Row title="Materiais" items={materials} />
-        <Row title="Participações na Olavo TV" items={live} />
+        <Row title="Participações ao vivo" items={live} />
         {empty && <p className="px-4 text-muted-foreground sm:px-8 lg:px-12">Este professor ainda não tem conteúdos liberados para você.</p>}
       </div>
     </>

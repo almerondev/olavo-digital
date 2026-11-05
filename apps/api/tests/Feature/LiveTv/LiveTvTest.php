@@ -8,50 +8,42 @@ use App\Modules\Access\Models\StudentGroup;
 use App\Modules\Auth\Models\User;
 use App\Modules\Cast\Models\Teacher;
 use App\Modules\Catalog\Models\Category;
+use App\Modules\Catalog\Models\Course;
 use App\Modules\Home\Models\HomeLayout;
 use App\Modules\Home\Services\HomeService;
 use App\Modules\LiveTv\Events\LiveStreamStarted;
-use App\Modules\LiveTv\Jobs\EndDisconnectedStream;
-use App\Modules\LiveTv\Models\LiveChannel;
 use App\Modules\LiveTv\Models\LiveSchedule;
 use App\Modules\LiveTv\Models\LiveStream;
-use App\Modules\LiveTv\Providers\LiveProvider;
-use App\Modules\LiveTv\Services\LiveStreamService;
 use App\Modules\Materials\Enums\MaterialStatus;
-use App\Modules\Materials\Models\Material;
+use App\Modules\Materials\Enums\MaterialType;
 use App\Modules\Materials\Services\MaterialWorkflow;
+use App\Support\YouTubeUrl;
 use Database\Seeders\AccessSeeder;
 use Database\Seeders\CatalogSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Queue;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class LiveTvTest extends TestCase
 {
     use RefreshDatabase;
 
+    private const URL = 'https://www.youtube.com/live/abc123DEF45';
+
     private User $admin;
     private User $student;
     private Teacher $teacher;
-    private LiveChannel $channel;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->seed([AccessSeeder::class, CatalogSeeder::class]);
-        Storage::fake('uploads_private');
         $this->admin = User::factory()->create();
         $this->admin->roles()->attach(Role::where('slug', Role::ADMIN)->first());
         $this->student = User::factory()->create();
         $this->student->roles()->attach(Role::where('slug', Role::STUDENT)->first());
         Student::create(['user_id' => $this->student->id]);
         $this->teacher = Teacher::create(['slug' => 'prof', 'display_name' => 'Prof']);
-
-        $provider = app(LiveProvider::class);
-        $this->channel = LiveChannel::create(['name' => 'Estúdio', 'provider' => $provider->name()] + $provider->createInput('Estúdio'));
     }
 
     private function as(User $user): static
@@ -61,215 +53,166 @@ class LiveTvTest extends TestCase
         return $this->actingAs($user, 'web');
     }
 
+    private function payload(array $overrides = []): array
+    {
+        return $overrides + [
+            'title' => 'Aulão',
+            'youtube_url' => self::URL,
+            'teacher_id' => $this->teacher->id,
+            'starts_at' => now()->toIso8601String(),
+            'ends_at' => now()->addHours(2)->toIso8601String(),
+        ];
+    }
+
+    private function goLive(array $overrides = []): int
+    {
+        return $this->as($this->admin)->postJson('/api/v1/admin/live/go-live', $this->payload($overrides))->assertCreated()->json('data.stream_id');
+    }
+
     private function schedule(array $overrides = []): LiveSchedule
     {
         return LiveSchedule::create($overrides + [
-            'live_channel_id' => $this->channel->id,
-            'title' => 'Aulão',
-            'teacher_id' => $this->teacher->id,
-            'starts_at' => now()->addMinutes(5),
-            'ends_at' => now()->addHours(2),
+            'title' => 'Plantão', 'teacher_id' => $this->teacher->id,
+            'starts_at' => now()->addDay(), 'ends_at' => now()->addDay()->addHour(),
         ]);
     }
 
-    private function webhook(string $type, string $session = 'sessao-1')
+    public function test_understands_youtube_link_formats(): void
     {
-        $body = json_encode(['type' => $type, 'input_id' => $this->channel->provider_input_id, 'session' => $session]);
+        foreach ([
+            'https://www.youtube.com/watch?v=abc123DEF45',
+            'https://youtube.com/watch?feature=share&v=abc123DEF45',
+            'https://youtu.be/abc123DEF45?si=x',
+            'https://www.youtube.com/live/abc123DEF45?feature=share',
+            'https://m.youtube.com/watch?v=abc123DEF45',
+            'https://www.youtube.com/embed/abc123DEF45',
+        ] as $url) {
+            $this->assertSame('abc123DEF45', YouTubeUrl::id($url), $url);
+        }
 
-        return $this->call('POST', '/api/v1/webhooks/live/simulated', [], [], [], [
-            'CONTENT_TYPE' => 'application/json',
-            'HTTP_ACCEPT' => 'application/json',
-            'HTTP_X_LIVE_SIGNATURE' => app(LiveProvider::class)->sign($body),
-        ], $body);
+        foreach (['https://vimeo.com/123', 'https://youtube.com.golpe.test/watch?v=abc123DEF45', 'qualquer coisa', 'https://www.youtube.com/@canal'] as $url) {
+            $this->assertNull(YouTubeUrl::id($url), $url);
+        }
     }
 
-    public function test_stream_key_is_encrypted_at_rest_and_never_listed(): void
+    public function test_admin_pastes_link_and_goes_live(): void
     {
-        $this->assertNotSame($this->channel->stream_key, DB::table('live_channels')->value('stream_key'));
+        Event::fake([LiveStreamStarted::class]);
 
-        $this->as($this->admin)->getJson('/api/v1/admin/live/channels')->assertOk()
-            ->assertJsonPath('meta.simulated', true)
-            ->assertJsonMissingPath('data.0.stream_key');
+        $id = $this->goLive();
+
+        $this->as($this->student)->getJson('/api/v1/tv/now')->assertOk()
+            ->assertJsonPath('data.live.stream_id', $id)
+            ->assertJsonPath('data.live.schedule.title', 'Aulão')
+            ->assertJsonPath('data.live.embed_url', 'https://www.youtube-nocookie.com/embed/abc123DEF45?autoplay=1&mute=1&rel=0');
+
+        Event::assertDispatchedTimes(LiveStreamStarted::class, 1);
     }
 
-    public function test_viewing_key_needs_permission_and_is_audited(): void
+    public function test_student_does_not_receive_original_link_in_schedule(): void
     {
-        $this->as($this->admin)->getJson("/api/v1/admin/live/channels/{$this->channel->id}/key")
-            ->assertOk()->assertJsonPath('data.stream_key', $this->channel->stream_key);
+        $this->schedule(['youtube_url' => self::URL]);
 
-        $this->assertDatabaseHas('activity_logs', ['action' => 'live.key_viewed']);
-
-        $role = Role::create(['slug' => 'operador', 'name' => 'Operador']);
-        $role->permissions()->sync(\App\Modules\Access\Models\Permission::whereIn('slug', ['panel.admin', 'live.manage'])->pluck('id'));
-        $operator = User::factory()->create();
-        $operator->roles()->attach($role);
-
-        $this->as($operator)->getJson('/api/v1/admin/live/channels')->assertOk();
-        $this->getJson("/api/v1/admin/live/channels/{$this->channel->id}/key")->assertForbidden();
+        $this->as($this->student)->getJson('/api/v1/tv/schedule')->assertJsonMissingPath('data.0.youtube_url');
     }
 
-    public function test_key_can_be_rotated_only_off_air(): void
+    public function test_invalid_link_is_refused(): void
     {
-        $old = $this->channel->stream_key;
-
-        $this->as($this->admin)->postJson("/api/v1/admin/live/channels/{$this->channel->id}/key")->assertOk();
-        $this->assertNotSame($old, $this->channel->fresh()->stream_key);
-
-        $this->webhook('connected');
-        $this->postJson("/api/v1/admin/live/channels/{$this->channel->id}/key")->assertStatus(409)->assertJsonPath('code', 'channel_on_air');
-    }
-
-    public function test_webhook_rejects_wrong_signature_or_provider(): void
-    {
-        $body = json_encode(['type' => 'connected', 'input_id' => $this->channel->provider_input_id, 'session' => 'x']);
-
-        $this->call('POST', '/api/v1/webhooks/live/simulated', [], [], [], ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json', 'HTTP_X_LIVE_SIGNATURE' => 'falsa'], $body)
-            ->assertUnauthorized();
-        $this->call('POST', '/api/v1/webhooks/live/outro', [], [], [], ['HTTP_ACCEPT' => 'application/json'], $body)->assertNotFound();
+        $this->as($this->admin)->postJson('/api/v1/admin/live/go-live', $this->payload(['youtube_url' => 'https://exemplo.test/video']))
+            ->assertStatus(422)->assertJsonValidationErrors('youtube_url');
 
         $this->assertSame(0, LiveStream::count());
     }
 
-    public function test_connection_starts_the_planned_schedule_and_notifies_once(): void
+    public function test_only_one_broadcast_at_a_time(): void
     {
-        Event::fake([LiveStreamStarted::class]);
-        $schedule = $this->schedule();
+        $this->goLive();
 
-        $this->webhook('connected')->assertNoContent();
-        $this->webhook('connected')->assertNoContent();
-
-        $this->assertSame(1, LiveStream::count());
-        $this->assertSame('live', $schedule->fresh()->status->value);
-        Event::assertDispatchedTimes(LiveStreamStarted::class, 1);
+        $this->postJson('/api/v1/admin/live/go-live', $this->payload(['title' => 'Outra']))
+            ->assertStatus(409)->assertJsonPath('code', 'stream_on_air');
     }
 
-    public function test_connection_picks_the_schedule_closest_to_now(): void
+    public function test_scheduled_broadcast_starts_only_with_link(): void
     {
-        $far = $this->schedule(['title' => 'Distante', 'starts_at' => now()->addMinutes(25)]);
-        $near = $this->schedule(['title' => 'Próxima', 'starts_at' => now()->addMinutes(2)]);
+        $empty = $this->schedule();
+        $ready = $this->schedule(['youtube_url' => self::URL]);
 
-        $this->webhook('connected');
+        $this->as($this->admin)->postJson("/api/v1/admin/live/schedules/{$empty->id}/start")->assertStatus(422)->assertJsonPath('code', 'youtube_url_required');
+        $this->postJson("/api/v1/admin/live/schedules/{$ready->id}/start")->assertOk();
 
-        $this->assertSame('live', $near->fresh()->status->value);
-        $this->assertSame('scheduled', $far->fresh()->status->value);
+        $this->assertSame('live', $ready->fresh()->status->value);
     }
 
-    public function test_connection_without_schedule_creates_adhoc_entry(): void
-    {
-        $this->webhook('connected');
-
-        $this->assertTrue(LiveSchedule::first()->is_adhoc);
-    }
-
-    public function test_brief_signal_loss_does_not_end_the_class(): void
-    {
-        Queue::fake();
-        Event::fake([LiveStreamStarted::class]);
-        $schedule = $this->schedule();
-
-        $this->webhook('connected');
-        $this->webhook('disconnected');
-
-        $stream = LiveStream::first();
-        $this->assertNotNull($stream->disconnected_at);
-        Queue::assertPushed(EndDisconnectedStream::class);
-
-        $this->webhook('connected', 'sessao-2');
-
-        $this->assertNull($stream->fresh()->disconnected_at);
-        $this->assertSame(1, LiveStream::count());
-        Event::assertDispatchedTimes(LiveStreamStarted::class, 1);
-
-        // O encerramento agendado na queda não vale mais.
-        app(LiveStreamService::class)->endIfStillDisconnected($stream->id, $stream->disconnected_at?->toIso8601String() ?? now()->subMinute()->toIso8601String());
-        $this->assertNull($stream->fresh()->ended_at);
-        $this->assertSame('live', $schedule->fresh()->status->value);
-    }
-
-    public function test_long_signal_loss_ends_at_the_moment_it_dropped(): void
-    {
-        Queue::fake();
-        $schedule = $this->schedule();
-        $this->webhook('connected');
-        $this->webhook('disconnected');
-
-        $stream = LiveStream::first();
-        $droppedAt = $stream->disconnected_at;
-
-        $this->travel(4)->minutes();
-        app(LiveStreamService::class)->endIfStillDisconnected($stream->id, $droppedAt->toIso8601String());
-
-        $this->assertEquals($droppedAt, $stream->fresh()->ended_at);
-        $this->assertSame('ended', $schedule->fresh()->status->value);
-    }
-
-    public function test_recording_becomes_a_draft_once(): void
+    public function test_ending_creates_recording_draft_with_same_link(): void
     {
         $history = Category::where('slug', 'historia')->first();
-        $this->schedule(['category_id' => $history->id, 'description' => 'Revisão']);
-        Queue::fake();
-        $this->webhook('connected');
-        $this->as($this->admin)->postJson('/api/v1/admin/live/streams/'.LiveStream::first()->id.'/end')->assertNoContent();
+        $id = $this->goLive(['category_id' => $history->id, 'description' => 'Revisão']);
 
-        $this->webhook('recording_ready');
-        $this->webhook('recording_ready');
+        $this->postJson("/api/v1/admin/live/streams/{$id}/end")->assertNoContent();
+        $this->postJson("/api/v1/admin/live/streams/{$id}/end")->assertStatus(409);
 
-        $material = LiveStream::first()->material;
-        $this->assertSame(1, Material::count());
+        $stream = LiveStream::find($id);
+        $material = $stream->material;
+
         $this->assertSame(MaterialStatus::Draft, $material->status);
-        $this->assertSame('Aulão', $material->title);
-        $this->assertSame($this->teacher->id, $material->teacher_id);
-        $this->assertSame($history->id, $material->categories()->first()->id);
+        $this->assertSame(MaterialType::ExternalVideo, $material->type);
+        $this->assertSame(self::URL, $material->external_url);
+        $this->assertSame('ended', $stream->schedule->status->value);
 
         app(MaterialWorkflow::class)->publish($material, $this->admin);
 
-        $this->as($this->student)->getJson('/api/v1/tv/now')->assertJsonPath('data.recordings.0.title', 'Aulão');
+        $this->as($this->student)->getJson('/api/v1/tv/now')
+            ->assertJsonPath('data.live', null)
+            ->assertJsonPath('data.recordings.0.title', 'Aulão');
         $this->getJson('/api/v1/teachers/prof')->assertJsonPath('data.live.0.title', 'Aulão');
+        $this->getJson("/api/v1/materials/{$material->slug}")->assertJsonPath('data.embed_url', 'https://www.youtube-nocookie.com/embed/abc123DEF45?autoplay=1&rel=0');
     }
 
-    public function test_page_shows_live_or_next_broadcasts(): void
+    public function test_programming_can_be_turned_off(): void
     {
-        $this->schedule(['title' => 'Mais tarde', 'starts_at' => now()->addDays(2), 'ends_at' => now()->addDays(2)->addHour()]);
+        $this->schedule(['title' => 'Mais tarde']);
 
-        $this->as($this->student)->getJson('/api/v1/tv/now')->assertOk()
-            ->assertJsonPath('data.live', null)
+        $this->as($this->student)->getJson('/api/v1/tv/now')
+            ->assertJsonPath('data.schedule_enabled', true)
             ->assertJsonPath('data.upcoming.0.title', 'Mais tarde');
 
-        $this->schedule(['title' => 'Agora']);
-        $this->webhook('connected');
+        $this->as($this->admin)->putJson('/api/v1/admin/live/settings', ['schedule_enabled' => false])->assertOk();
 
-        $stream = LiveStream::first();
-        $this->getJson('/api/v1/tv/now')
-            ->assertJsonPath('data.live.schedule.title', 'Agora')
-            ->assertJsonPath('data.live.stream_id', $stream->id)
-            ->assertJsonPath('data.live.schedule.teacher.name', 'Prof');
-
-        $this->getJson("/api/v1/tv/streams/{$stream->id}/playback")->assertOk()->assertJsonPath('data.kind', 'file');
+        $this->as($this->student)->getJson('/api/v1/tv/now')
+            ->assertJsonPath('data.schedule_enabled', false)
+            ->assertJsonCount(0, 'data.upcoming');
+        $this->getJson('/api/v1/tv/schedule')->assertJsonCount(0, 'data');
     }
 
-    public function test_restricted_broadcast_hides_from_outsiders(): void
+    public function test_live_programming_off_still_shows_broadcast(): void
     {
-        $group = StudentGroup::create(['name' => 'Turma', 'slug' => 'turma']);
-        $schedule = $this->schedule();
-        $schedule->syncAudience([$group->id]);
-        $this->webhook('connected');
-        $stream = LiveStream::first();
+        $this->goLive();
+        $this->putJson('/api/v1/admin/live/settings', ['schedule_enabled' => false]);
+
+        $this->as($this->student)->getJson('/api/v1/tv/now')->assertJsonPath('data.live.schedule.title', 'Aulão');
+    }
+
+    public function test_broadcast_of_a_course_reaches_only_its_students(): void
+    {
+        $esa = Course::create(['name' => 'ESA', 'slug' => 'esa']);
+        $id = $this->goLive(['course_id' => $esa->id]);
 
         $this->as($this->student)->getJson('/api/v1/tv/now')->assertJsonPath('data.live', null);
-        $this->getJson("/api/v1/tv/streams/{$stream->id}/playback")->assertNotFound();
 
-        $group->students()->attach($this->student->student);
-        $this->as($this->student->fresh())->getJson('/api/v1/tv/now')->assertJsonPath('data.live.stream_id', $stream->id);
+        $this->student->student->courses()->attach($esa);
+
+        $this->as($this->student->fresh())->getJson('/api/v1/tv/now')->assertJsonPath('data.live.stream_id', $id);
     }
 
-    public function test_ended_stream_has_no_playback(): void
+    public function test_restricted_group_broadcast_hides_from_outsiders(): void
     {
-        Queue::fake();
-        $this->webhook('connected');
-        $stream = LiveStream::first();
-        app(LiveStreamService::class)->endNow($stream);
+        $group = StudentGroup::create(['name' => 'Turma', 'slug' => 'turma']);
+        $this->goLive(['group_ids' => [$group->id]]);
 
-        $this->as($this->student)->getJson("/api/v1/tv/streams/{$stream->id}/playback")->assertNotFound();
+        $this->as($this->student)->getJson('/api/v1/tv/now')->assertJsonPath('data.live', null);
+
+        $group->students()->attach($this->student->student);
+        $this->as($this->student->fresh())->getJson('/api/v1/tv/now')->assertJsonPath('data.live.schedule.title', 'Aulão');
     }
 
     public function test_live_broadcast_takes_over_the_home_hero(): void
@@ -277,8 +220,7 @@ class LiveTvTest extends TestCase
         HomeLayout::create(['name' => 'Início', 'surface' => 'home', 'status' => 'published', 'published_at' => now()]);
         HomeLayout::create(['name' => 'Materiais', 'surface' => 'materials', 'status' => 'published', 'published_at' => now()]);
         app(HomeService::class)->flush();
-        $this->schedule(['title' => 'No ar']);
-        $this->webhook('connected');
+        $this->goLive(['title' => 'No ar']);
 
         $this->as($this->student)->getJson('/api/v1/home')
             ->assertJsonPath('data.hero.0.title', 'No ar')
@@ -289,19 +231,17 @@ class LiveTvTest extends TestCase
 
     public function test_admin_manages_schedule_rules(): void
     {
-        $payload = ['live_channel_id' => $this->channel->id, 'title' => 'Plantão', 'starts_at' => now()->addDay()->toIso8601String(), 'ends_at' => now()->addDay()->addHour()->toIso8601String()];
+        $this->as($this->admin)->postJson('/api/v1/admin/live/schedules', $this->payload(['ends_at' => now()->subDay()->toIso8601String()]))
+            ->assertStatus(422)->assertJsonValidationErrors('ends_at');
 
-        $this->as($this->admin)->postJson('/api/v1/admin/live/schedules', ['ends_at' => $payload['starts_at']] + $payload)->assertStatus(422)->assertJsonValidationErrors('ends_at');
-
-        $id = $this->postJson('/api/v1/admin/live/schedules', $payload)->assertCreated()->json('data.id');
-        $this->putJson("/api/v1/admin/live/schedules/{$id}", ['title' => 'Plantão novo'] + $payload)->assertOk()->assertJsonPath('data.title', 'Plantão novo');
+        $id = $this->postJson('/api/v1/admin/live/schedules', $this->payload())->assertCreated()->json('data.id');
+        $this->putJson("/api/v1/admin/live/schedules/{$id}", $this->payload(['title' => 'Novo']))->assertOk()->assertJsonPath('data.title', 'Novo');
         $this->postJson("/api/v1/admin/live/schedules/{$id}/cancel")->assertOk()->assertJsonPath('data.status', 'cancelled');
         $this->postJson("/api/v1/admin/live/schedules/{$id}/cancel")->assertStatus(409);
-        $this->putJson("/api/v1/admin/live/schedules/{$id}", $payload)->assertStatus(409);
     }
 
     public function test_only_staff_manages_live(): void
     {
-        $this->as($this->student)->getJson('/api/v1/admin/live/channels')->assertForbidden();
+        $this->as($this->student)->postJson('/api/v1/admin/live/go-live', $this->payload())->assertForbidden();
     }
 }

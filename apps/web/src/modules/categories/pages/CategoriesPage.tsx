@@ -13,6 +13,7 @@ import { CATEGORIES_KEY, flattenTree, useCategories, useGroupOptions, useTeacher
 import { ApiError } from '@/services/http'
 import type { Category, CategoryType, Upload } from '@/types/api'
 import { categoriesApi, type CategoryInput } from '../api/categories'
+import { coursesApi } from '../api/courses'
 
 const TYPES_KEY = ['admin', 'category-types']
 
@@ -74,7 +75,7 @@ export function CategoriesPage() {
               >
                 <span className={cn('font-medium', !category.is_active && 'text-muted-foreground line-through')}>{category.name}</span>
                 <span className="block text-xs text-muted-foreground tabular-nums">
-                  {typeName(category.category_type_id)} · {category.materials_count} {category.materials_count === 1 ? "material" : "materiais"}
+                  {category.course_name ?? 'Geral'} · {typeName(category.category_type_id)} · {category.materials_count} {category.materials_count === 1 ? "material" : "materiais"}
                   {category.visibility !== 'public' && ` · ${VISIBILITY_LABELS[category.visibility]}`}
                 </span>
               </button>
@@ -122,6 +123,7 @@ function CategoryEditor({ category, categories, types, onClose }: EditorProps) {
     name: category?.name ?? '',
     category_type_id: category?.category_type_id ?? types[0].id,
     parent_id: category?.parent_id ?? null,
+    course_id: category?.course_id ?? null,
     description: category?.description ?? '',
     icon: category?.icon ?? '',
     is_active: category?.is_active ?? true,
@@ -130,6 +132,7 @@ function CategoryEditor({ category, categories, types, onClose }: EditorProps) {
     group_ids: category?.group_ids ?? [],
   })
 
+  const courses = useQuery({ queryKey: ['admin', 'courses'], queryFn: coursesApi.list })
   const refresh = () => queryClient.invalidateQueries({ queryKey: CATEGORIES_KEY })
 
   const save = useMutation({
@@ -197,6 +200,20 @@ function CategoryEditor({ category, categories, types, onClose }: EditorProps) {
           </NativeSelect>
           {failure?.fieldError('parent_id') && <p className="text-sm text-destructive">{failure.fieldError('parent_id')}</p>}
         </div>
+      </div>
+
+      <div className="grid gap-2">
+        <Label htmlFor="cat-course">Curso</Label>
+        <NativeSelect
+          id="cat-course"
+          value={form.course_id ?? ''}
+          disabled={form.parent_id !== null}
+          onChange={(e) => setForm({ ...form, course_id: e.target.value ? Number(e.target.value) : null })}
+        >
+          <option value="">Geral: todos os cursos</option>
+          {courses.data?.map((course) => <option key={course.id} value={course.id}>{course.name}</option>)}
+        </NativeSelect>
+        <p className="text-xs text-muted-foreground">{form.parent_id !== null ? 'Subcategoria segue o curso da categoria superior.' : 'Só os alunos do curso escolhido veem esta categoria.'}</p>
       </div>
 
       <div className="grid gap-2">

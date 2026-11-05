@@ -15,7 +15,7 @@ import { toLocalInput } from '@/utils/format'
 import type { MaterialAction, MaterialInput } from '../api/materials'
 import { adminBackend, type MaterialBackend } from '../backends'
 import { StatusBadge } from '../components/StatusBadge'
-import { flattenTree } from '../hooks'
+import { courseLabel, flattenTree } from '../hooks'
 import { TYPE_ACCEPT, TYPE_LABELS, VISIBILITY_LABELS } from '../labels'
 
 interface FormState extends Omit<MaterialInput, 'cover_upload_id' | 'banner_upload_id' | 'file_upload_id' | 'subtitle_upload_id' | 'publish_at'> {
@@ -284,7 +284,7 @@ function MaterialForm({ material, backend, canPublish }: MaterialFormProps) {
                   <div key={category.id} className="flex items-center justify-between gap-3 text-sm" style={{ paddingLeft: depth * 16 }}>
                     <Label className="flex items-center gap-2 font-normal">
                       <Checkbox checked={checked} onCheckedChange={(value) => toggleCategory(category.id, value === true)} />
-                      {category.name}
+                      {courseLabel(category)}
                     </Label>
                     {checked && (
                       <label className="flex items-center gap-1 text-xs text-muted-foreground">

@@ -134,8 +134,13 @@ class TeacherPanelController extends Controller
             ->wherePivot('can_publish', true)
             ->where('is_active', true)
             ->orderBy('sort_order')
-            ->get(['categories.id', 'categories.name', 'categories.parent_id'])
-            ->map(fn ($category) => ['id' => $category->id, 'name' => $category->name, 'parent_id' => null])]);
+            ->with('course')
+            ->get(['categories.id', 'categories.name', 'categories.parent_id', 'categories.course_id'])
+            ->map(fn ($category) => [
+                'id' => $category->id,
+                'name' => $category->course ? "{$category->name} · {$category->course->name}" : $category->name,
+                'parent_id' => null,
+            ])]);
     }
 
     public function teachers(Request $request): JsonResponse

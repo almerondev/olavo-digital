@@ -58,6 +58,8 @@ export interface Category {
   slug: string
   category_type_id: number
   parent_id: number | null
+  course_id: number | null
+  course_name: string | null
   description: string | null
   icon: string | null
   cover: Upload | null
@@ -139,6 +141,7 @@ export interface MaterialDetail extends CardMaterial {
   published_at: string | null
   external_url: string | null
   video_provider: string | null
+  embed_url: string | null
   allow_download: boolean
   file: { name: string; class: string; size_bytes: number | null } | null
 }
@@ -307,32 +310,34 @@ export interface LiveScheduleItem {
   status: ScheduleStatus
   is_adhoc: boolean
   notify_on_start: boolean
-  live_channel_id: number
+  youtube_url?: string | null
+  course: { id: number; name: string } | null
   group_ids?: number[]
 }
 
 export interface TvNow {
-  live: { stream_id: number; started_at: string; reconnecting: boolean; schedule: LiveScheduleItem } | null
+  schedule_enabled: boolean
+  live: { stream_id: number; started_at: string; embed_url: string; schedule: LiveScheduleItem } | null
   upcoming: LiveScheduleItem[]
   recordings: CardMaterial[]
-}
-
-export interface LiveChannelItem {
-  id: number
-  name: string
-  provider: string
-  ingest_rtmps_url: string | null
-  ingest_srt_url: string | null
-  on_air: boolean
 }
 
 export interface LiveStreamItem {
   id: number
   title: string
-  channel: string
+  course: string | null
+  youtube_url: string | null
   started_at: string
   ended_at: string | null
-  reconnecting: boolean
-  session: string
   material: { id: number; status: MaterialStatus } | null
+}
+
+export interface Course {
+  id: number
+  name: string
+  slug: string
+  description: string | null
+  is_active: boolean
+  categories_count: number
+  students_count: number
 }

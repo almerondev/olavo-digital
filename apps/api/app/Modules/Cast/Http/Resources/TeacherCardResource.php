@@ -15,7 +15,7 @@ class TeacherCardResource extends JsonResource
             'name' => $this->display_name,
             'short_bio' => $this->short_bio,
             'photo_urls' => (object) ($this->photo?->imageUrls() ?? []),
-            'subjects' => $this->categories->pluck('name'),
+            'subjects' => $this->categories->pluck('name')->unique()->values(),
         ];
     }
 }

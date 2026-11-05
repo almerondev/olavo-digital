@@ -69,7 +69,7 @@ class HomeBuilderController extends Controller
     {
         $group = $request->integer('group') ? StudentGroup::findOrFail($request->integer('group')) : null;
 
-        return response()->json(['data' => $this->home->preview($layout, $group)]);
+        return response()->json(['data' => $this->home->preview($layout, $group, $request->integer('course') ?: null)]);
     }
 
     public function storeSection(SaveSectionRequest $request, HomeLayout $layout): JsonResponse

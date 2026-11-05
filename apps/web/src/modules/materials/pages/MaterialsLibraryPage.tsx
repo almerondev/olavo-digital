@@ -10,7 +10,7 @@ import { ApiError } from '@/services/http'
 import { formatDate } from '@/utils/format'
 import { materialsApi, type BulkAction, type BulkResult } from '../api/materials'
 import { StatusBadge } from '../components/StatusBadge'
-import { flattenTree, useCategories, useTeacherOptions } from '../hooks'
+import { courseLabel, flattenTree, useCategories, useTeacherOptions } from '../hooks'
 import { STATUS_LABELS, TYPE_LABELS, VISIBILITY_LABELS } from '../labels'
 
 const LIBRARY_KEY = ['admin', 'materials']
@@ -72,7 +72,7 @@ export function MaterialsLibraryPage() {
           {flattenTree(categories.data ?? []).map(({ category, depth }) => (
             <option key={category.id} value={category.id}>
               {'— '.repeat(depth)}
-              {category.name}
+              {courseLabel(category)}
             </option>
           ))}
         </NativeSelect>
@@ -225,7 +225,7 @@ function BulkBar({ ids, onDone }: { ids: number[]; onDone: () => void }) {
           onChange={(e) => run('add_category', { category_id: Number(e.target.value) })}
         >
           <option value="">Adicionar categoria…</option>
-          {categories.data?.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+          {categories.data?.map((category) => <option key={category.id} value={category.id}>{courseLabel(category)}</option>)}
         </NativeSelect>
         <Button
           size="sm"

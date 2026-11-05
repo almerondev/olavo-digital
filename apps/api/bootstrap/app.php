@@ -18,7 +18,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([__DIR__.'/../app/Modules/Materials/Console', __DIR__.'/../app/Modules/Uploads/Console'])
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
-        $middleware->validateCsrfTokens(except: ['api/v1/webhooks/*']);
         $middleware->alias(['active' => EnsureUserIsActive::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

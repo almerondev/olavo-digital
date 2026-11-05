@@ -3,6 +3,7 @@
 namespace App\Modules\Access\Models;
 
 use App\Modules\Auth\Models\User;
+use App\Modules\Catalog\Models\Course;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,11 @@ class Student extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function courses(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class)->withPivot('enrolled_at');
     }
 
     public function groups(): BelongsToMany

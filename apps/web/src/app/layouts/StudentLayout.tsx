@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Início' },
   { to: '/materiais', label: 'Materiais' },
   { to: '/explorar', label: 'Explorar' },
-  { to: '/olavo-tv', label: 'Olavo TV' },
+  { to: '/ao-vivo', label: 'Ao vivo agora' },
   { to: '/elenco', label: 'Elenco' },
   { to: '/minha-lista', label: 'Minha lista', studentOnly: true },
 ]

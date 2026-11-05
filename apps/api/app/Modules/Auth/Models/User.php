@@ -31,6 +31,9 @@ class User extends Authenticatable
     /** @var Collection<int, int>|null */
     private ?Collection $simulatedGroups = null;
 
+    /** @var Collection<int, int>|null */
+    private ?Collection $simulatedCourses = null;
+
     protected static function newFactory(): UserFactory
     {
         return UserFactory::new();
@@ -73,10 +76,11 @@ class User extends Authenticatable
     }
 
     /** Aluno fictício da pré-visualização: nunca é salvo, só responde às regras de público. */
-    public static function simulatedStudent(array $groupIds): self
+    public static function simulatedStudent(array $groupIds, array $courseIds = []): self
     {
         $user = (new self)->forceFill(['id' => 0]);
         $user->simulatedGroups = collect($groupIds);
+        $user->simulatedCourses = collect($courseIds);
 
         return $user->setRelation('student', (new Student)->forceFill(['id' => 0]))->setRelation('teacher', null);
     }
@@ -85,6 +89,12 @@ class User extends Authenticatable
     public function audienceGroupIds(): Collection
     {
         return $this->simulatedGroups ?? $this->student?->groups()->pluck('student_groups.id') ?? collect();
+    }
+
+    /** @return Collection<int, int> */
+    public function audienceCourseIds(): Collection
+    {
+        return $this->simulatedCourses ?? $this->student?->courses()->pluck('courses.id') ?? collect();
     }
 
     public function isActive(): bool

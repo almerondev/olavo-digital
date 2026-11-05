@@ -20,7 +20,7 @@ const MODULE_LABELS: Record<string, string> = {
   catalogo: 'Catálogo',
   pessoas: 'Pessoas',
   comunicacao: 'Comunicação',
-  olavo_tv: 'Olavo TV',
+  olavo_tv: 'Ao vivo agora',
   sistema: 'Sistema',
 }
 

@@ -38,7 +38,7 @@ function ScheduleList({ items }: { items: LiveScheduleItem[] }) {
                 <span className="w-14 shrink-0 font-heading text-lg font-bold tabular-nums">{timeLabel(item.starts_at)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-semibold">{item.title}</span>
-                  <span className="block truncate text-xs text-muted-foreground">{[item.teacher?.name, item.category?.name].filter(Boolean).join(' · ') || 'Olavo TV'}</span>
+                  <span className="block truncate text-xs text-muted-foreground">{[item.teacher?.name, item.category?.name].filter(Boolean).join(' · ') || 'Ao vivo'}</span>
                 </span>
                 {item.status === 'live' ? <LiveBadge /> : <span className="text-xs text-muted-foreground">{STATUS_LABELS[item.status]}</span>}
               </li>
@@ -57,19 +57,19 @@ export function OlavoTvPage() {
   if (now.isPending) return <div role="status" aria-label="Carregando" className="min-h-[60dvh] animate-pulse bg-card/40" />
 
   if (now.isError) {
-    return <div className="grid min-h-[70dvh] place-items-center px-4 text-center"><p role="alert">Não foi possível carregar a Olavo TV. Recarregue a página.</p></div>
+    return <div className="grid min-h-[70dvh] place-items-center px-4 text-center"><p role="alert">Não foi possível carregar as transmissões. Recarregue a página.</p></div>
   }
 
-  const { live, recordings, upcoming } = now.data
+  const { live, recordings, upcoming, schedule_enabled: scheduleEnabled } = now.data
 
   return (
     <div className="pt-24 pb-16">
       <div className="px-4 sm:px-8 lg:px-12">
-        <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">Olavo TV</h1>
+        <h1 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">Ao vivo agora</h1>
 
         {live ? (
           <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <LivePlayer key={live.stream_id} streamId={live.stream_id} title={live.schedule.title} reconnecting={live.reconnecting} />
+            <LivePlayer key={live.stream_id} embedUrl={live.embed_url} title={live.schedule.title} />
             <div>
               <LiveBadge />
               <h2 className="mt-3 font-heading text-2xl font-bold tracking-tight">{live.schedule.title}</h2>
@@ -102,12 +102,14 @@ export function OlavoTvPage() {
         </section>
       )}
 
-      <section aria-label="Programação" className="mt-10 max-w-3xl px-4 sm:px-8 lg:px-12">
-        <h2 className="mb-3 font-heading text-lg font-bold tracking-tight sm:text-xl">Programação</h2>
-        {schedule.isError && <p role="alert">Não foi possível carregar a programação.</p>}
-        {schedule.data?.length === 0 && <p className="text-muted-foreground">Nenhuma transmissão programada para os próximos dias.</p>}
-        {schedule.data && <ScheduleList items={schedule.data} />}
-      </section>
+      {scheduleEnabled && (
+        <section aria-label="Programação" className="mt-10 max-w-3xl px-4 sm:px-8 lg:px-12">
+          <h2 className="mb-3 font-heading text-lg font-bold tracking-tight sm:text-xl">Programação</h2>
+          {schedule.isError && <p role="alert">Não foi possível carregar a programação.</p>}
+          {schedule.data?.length === 0 && <p className="text-muted-foreground">Nenhuma transmissão programada para os próximos dias.</p>}
+          {schedule.data && <ScheduleList items={schedule.data} />}
+        </section>
+      )}
     </div>
   )
 }

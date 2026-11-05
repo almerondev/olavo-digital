@@ -1,12 +1,6 @@
 <?php
 
 return [
-    'live' => [
-        // simulated: sem encoder nem conta de vídeo. O provedor real entra como nova implementação.
-        'driver' => env('LIVE_DRIVER', 'simulated'),
-        'webhook_secret' => env('LIVE_WEBHOOK_SECRET'),
-    ],
-
     'uploads' => [
         // local: arquivos em disco, com URLs assinadas pelo Laravel. s3: R2, com URLs pré-assinadas.
         'driver' => env('UPLOADS_DRIVER', 'local'),

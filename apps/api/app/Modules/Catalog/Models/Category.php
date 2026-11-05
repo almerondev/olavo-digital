@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-#[Fillable(['category_type_id', 'parent_id', 'slug', 'name', 'description', 'icon', 'cover_upload_id', 'sort_order', 'is_active', 'visibility'])]
+#[Fillable(['category_type_id', 'parent_id', 'course_id', 'slug', 'name', 'description', 'icon', 'cover_upload_id', 'sort_order', 'is_active', 'visibility'])]
 class Category extends Model
 {
     use HasAudience, SoftDeletes;
@@ -30,6 +30,11 @@ class Category extends Model
     public function type(): BelongsTo
     {
         return $this->belongsTo(CategoryType::class, 'category_type_id');
+    }
+
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 
     public function parent(): BelongsTo
@@ -59,7 +64,12 @@ class Category extends Model
 
     public function scopeVisibleTo(Builder $query, User $user): Builder
     {
-        return $query->where('is_active', true)->where(function (Builder $query) use ($user) {
+        return $query->where('is_active', true)
+            // Aluno só enxerga conteúdo geral e o dos cursos em que está. Equipe vê todos.
+            ->when($user->student, fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                ->whereNull('categories.course_id')
+                ->orWhereIn('categories.course_id', $user->audienceCourseIds())))
+            ->where(function (Builder $query) use ($user) {
             $query->where('visibility', 'public')
                 ->orWhere(fn (Builder $restricted) => $restricted->where('visibility', 'restricted')->targeting($user));
         });

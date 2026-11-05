@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { NativeSelect } from '@/components/ui/native-select'
+import { coursesApi } from '@/modules/categories/api/courses'
 import { useGroupOptions } from '@/modules/materials/hooks'
 import { SurfaceContent } from '@/modules/home/pages/HomePage'
 import { homeBuilderApi } from '../api'
@@ -11,8 +12,10 @@ import { homeBuilderApi } from '../api'
 export function HomePreviewPage() {
   const id = Number(useParams().id)
   const [group, setGroup] = useState('')
+  const [course, setCourse] = useState('')
   const groups = useGroupOptions()
-  const preview = useQuery({ queryKey: ['admin', 'home-preview', id, group], queryFn: () => homeBuilderApi.preview(id, group), staleTime: 0, gcTime: 0 })
+  const courses = useQuery({ queryKey: ['admin', 'courses'], queryFn: coursesApi.list })
+  const preview = useQuery({ queryKey: ['admin', 'home-preview', id, group, course], queryFn: () => homeBuilderApi.preview(id, group, course), staleTime: 0, gcTime: 0 })
 
   const data = useMemo(() => preview.data && {
     ...preview.data,
@@ -28,9 +31,16 @@ export function HomePreviewPage() {
         </Link>
         <span className="mr-auto">Pré-visualização. Os alunos ainda não veem esta versão.</span>
         <label className="flex items-center gap-2">
-          Ver como
-          <NativeSelect aria-label="Ver como" className="w-48 border-black/30 bg-white/30 text-brand-foreground" value={group} onChange={(event) => setGroup(event.target.value)}>
-            <option value="">Aluno sem turma</option>
+          Curso
+          <NativeSelect aria-label="Curso" className="w-48 border-black/30 bg-white/30 text-brand-foreground" value={course} onChange={(event) => setCourse(event.target.value)}>
+            <option value="">Sem curso</option>
+            {courses.data?.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
+          </NativeSelect>
+        </label>
+        <label className="flex items-center gap-2">
+          Turma
+          <NativeSelect aria-label="Turma" className="w-40 border-black/30 bg-white/30 text-brand-foreground" value={group} onChange={(event) => setGroup(event.target.value)}>
+            <option value="">Sem turma</option>
             {groups.data?.map((option) => <option key={option.id} value={option.id}>{option.name}</option>)}
           </NativeSelect>
         </label>
@@ -40,7 +50,7 @@ export function HomePreviewPage() {
       {data && (
         data.hero.length === 0 && data.sections.length === 0
           ? <p className="p-16 text-center text-muted-foreground">Nada apareceria para este público.</p>
-          : <SurfaceContent key={group} data={data} cacheScope={`preview-${id}-${group}-${preview.dataUpdatedAt}`} />
+          : <SurfaceContent key={`${group}-${course}`} data={data} cacheScope={`preview-${id}-${group}-${course}-${preview.dataUpdatedAt}`} />
       )}
     </div>
   )

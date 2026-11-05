@@ -21,7 +21,7 @@ class CategoryController extends Controller
     public function index(): AnonymousResourceCollection
     {
         return CategoryResource::collection(
-            Category::query()->with('cover', 'teachers', 'audienceTargets')->withCount('materials')->orderBy('sort_order')->orderBy('name')->get()
+            Category::query()->with('cover', 'course', 'teachers', 'audienceTargets')->withCount('materials')->orderBy('sort_order')->orderBy('name')->get()
         );
     }
 
@@ -78,6 +78,11 @@ class CategoryController extends Controller
         return DB::transaction(function () use ($category, $data) {
             $category->fill(collect($data)->except(['teacher_ids', 'group_ids'])->all());
 
+            // Subcategoria sempre fica no curso da categoria superior.
+            if ($category->parent_id) {
+                $category->course_id = Category::whereKey($category->parent_id)->value('course_id');
+            }
+
             if (! $category->exists) {
                 $category->slug = $this->uniqueSlug($data['name']);
                 $category->sort_order = (int) Category::where('parent_id', $data['parent_id'] ?? null)->max('sort_order') + 1;
@@ -114,6 +119,6 @@ class CategoryController extends Controller
 
     private function loaded(Category $category): Category
     {
-        return $category->refresh()->load('cover', 'teachers', 'audienceTargets')->loadCount('materials');
+        return $category->refresh()->load('cover', 'course', 'teachers', 'audienceTargets')->loadCount('materials');
     }
 }

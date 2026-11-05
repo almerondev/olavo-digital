@@ -5,6 +5,7 @@ namespace App\Modules\Home\Services;
 use App\Modules\Materials\Enums\MaterialType;
 use App\Modules\Materials\Models\Material;
 use App\Modules\Uploads\Services\UploadStorage;
+use App\Support\YouTubeUrl;
 
 /** Define como o hero toca a prévia de um vídeo. Conteúdo que não é vídeo fica só com a imagem. */
 class HeroPreview
@@ -36,12 +37,10 @@ class HeroPreview
     {
         $host = strtolower((string) parse_url($url, PHP_URL_HOST));
         $path = trim((string) parse_url($url, PHP_URL_PATH), '/');
-        parse_str((string) parse_url($url, PHP_URL_QUERY), $query);
+        $id = YouTubeUrl::id($url);
 
-        if (str_ends_with($host, 'youtu.be') || str_ends_with($host, 'youtube.com')) {
-            $id = str_ends_with($host, 'youtu.be') ? $path : ($query['v'] ?? null);
-
-            return $id ? ['kind' => 'embed', 'url' => "https://www.youtube-nocookie.com/embed/{$id}?autoplay=1&mute=1&controls=0&loop=1&playlist={$id}&playsinline=1"] : null;
+        if ($id) {
+            return ['kind' => 'embed', 'url' => YouTubeUrl::embed($url, ['autoplay' => 1, 'mute' => 1, 'controls' => 0, 'loop' => 1, 'playlist' => $id, 'playsinline' => 1])];
         }
 
         if (str_ends_with($host, 'vimeo.com') && $path !== '') {

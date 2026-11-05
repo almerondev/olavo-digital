@@ -8,7 +8,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call([AccessSeeder::class, SettingsSeeder::class, CatalogSeeder::class, HomeSeeder::class]);
+        $this->call([AccessSeeder::class, SettingsSeeder::class, CatalogSeeder::class, CourseSeeder::class, HomeSeeder::class]);
 
         if (! app()->isProduction() && env('SEED_DEMO_PASSWORD')) {
             $this->call(DemoSeeder::class);

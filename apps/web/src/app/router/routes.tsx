@@ -1,4 +1,4 @@
-import { CircleUser, FolderTree, GraduationCap, House, LayoutTemplate, Library, Radio, ShieldCheck } from 'lucide-react'
+import { BookOpen, CircleUser, FolderTree, GraduationCap, House, LayoutTemplate, Library, Radio, ShieldCheck } from 'lucide-react'
 import { createBrowserRouter, isRouteErrorResponse, useRouteError } from 'react-router'
 import { PanelLayout, type PanelNavItem } from '@/app/layouts/PanelLayout'
 import { StudentLayout } from '@/app/layouts/StudentLayout'
@@ -7,7 +7,8 @@ import { GuestOnly, RequireAuth, RequirePermission } from './guards'
 const ADMIN_NAV: PanelNavItem[] = [
   { to: '/admin/materiais', label: 'Materiais', icon: Library, permission: 'materials.manage_all' },
   { to: '/admin/home', label: 'Construtor da home', icon: LayoutTemplate, permission: 'home.manage' },
-  { to: '/admin/olavo-tv', label: 'Olavo TV', icon: Radio, permission: 'live.manage' },
+  { to: '/admin/ao-vivo', label: 'Ao vivo agora', icon: Radio, permission: 'live.manage' },
+  { to: '/admin/cursos', label: 'Cursos', icon: BookOpen, permission: 'categories.manage' },
   { to: '/admin/professores', label: 'Professores', icon: GraduationCap, permission: 'teachers.manage' },
   { to: '/admin/categorias', label: 'Categorias', icon: FolderTree, permission: 'categories.manage' },
   { to: '/admin/papeis', label: 'Papéis e permissões', icon: ShieldCheck, permission: 'roles.manage' },
@@ -82,7 +83,7 @@ export const router = createBrowserRouter([
               { path: 'minha-lista', lazy: async () => ({ Component: (await import('@/modules/favorites/pages/MyListPage')).MyListPage }) },
               { path: 'historico', lazy: async () => ({ Component: (await import('@/modules/history/pages/HistoryPage')).HistoryPage }) },
               { path: 'perfil', lazy: async () => ({ Component: (await import('@/modules/profile/pages/ProfilePage')).ProfilePage }) },
-              { path: 'olavo-tv', lazy: async () => ({ Component: (await import('@/modules/olavo-tv/pages/OlavoTvPage')).OlavoTvPage }) },
+              { path: 'ao-vivo', lazy: async () => ({ Component: (await import('@/modules/olavo-tv/pages/OlavoTvPage')).OlavoTvPage }) },
               { path: 'elenco', lazy: async () => ({ Component: (await import('@/modules/cast/pages/CastPage')).CastPage }) },
               { path: 'elenco/:slug', lazy: async () => ({ Component: (await import('@/modules/cast/pages/TeacherProfilePage')).TeacherProfilePage }) },
               { path: 'explorar', lazy: async () => ({ Component: (await import('@/modules/catalog/pages/ExplorePage')).ExplorePage }) },
@@ -120,7 +121,7 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="live.manage" />,
                     children: [
-                      { path: 'olavo-tv', lazy: async () => ({ Component: (await import('@/modules/admin/live/pages/LiveAdminPage')).LiveAdminPage }) },
+                      { path: 'ao-vivo', lazy: async () => ({ Component: (await import('@/modules/admin/live/pages/LiveAdminPage')).LiveAdminPage }) },
                     ],
                   },
                   {
@@ -132,6 +133,7 @@ export const router = createBrowserRouter([
                   {
                     element: <RequirePermission permission="categories.manage" />,
                     children: [
+                      { path: 'cursos', lazy: async () => ({ Component: (await import('@/modules/categories/pages/CoursesPage')).CoursesPage }) },
                       { path: 'categorias', lazy: async () => ({ Component: (await import('@/modules/categories/pages/CategoriesPage')).CategoriesPage }) },
                     ],
                   },

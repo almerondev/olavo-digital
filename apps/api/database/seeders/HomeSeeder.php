@@ -33,7 +33,9 @@ class HomeSeeder extends Seeder
             ['title' => 'Novidades', 'source_type' => 'recent', 'sort_order' => 0],
         ]);
 
-        foreach (Category::whereNull('parent_id')->orderBy('sort_order')->get() as $position => $category) {
+        $subjects = Category::whereNull('parent_id')->orderBy('course_id')->orderBy('sort_order')->get();
+
+        foreach ($subjects as $position => $category) {
             $layout->sections()->create([
                 'title' => $category->name,
                 'source_type' => 'category',
